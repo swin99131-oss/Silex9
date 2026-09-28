@@ -134,8 +134,8 @@ export function StoriesBar() {
                 </div>
               ) : (
                 <button onClick={() => setShowCamera(true)} className="block w-full">
-                  <div className="w-[72px] h-[72px] rounded-full mx-auto bg-black flex items-center justify-center">
-                    <Plus size={26} className="text-white" />
+                  <div className="w-[72px] h-[72px] rounded-full mx-auto border-2 border-dashed border-line bg-chip flex items-center justify-center">
+                    <Plus size={26} className="text-ink/60" strokeWidth={2} />
                   </div>
                   <p className="text-xs mt-2 truncate">أضف قصة</p>
                 </button>

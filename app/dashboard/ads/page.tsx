@@ -28,6 +28,9 @@ import {
   type AdType,
 } from "@/lib/ad-templates"
 
+import { Sidebar } from "@/components/dashboard/sidebar"
+import { Header } from "@/components/dashboard/header"
+
 type AdCampaign = {
   id: string
   type: string
@@ -211,18 +214,20 @@ export default function AdsPage() {
   }
 
   return (
-    <div className="p-4 pb-28 md:p-6 space-y-6 max-w-3xl">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">الإعلانات</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">روّج لمنتجاتك ومتجرك للوصول لزبائن أكثر</p>
-        </div>
-        {!creating && (
-          <Button onClick={() => setCreating(true)} className="h-9 text-sm">
-            + إعلان جديد
-          </Button>
-        )}
+    <div className="flex min-h-screen bg-background">
+      <div className="hidden lg:block">
+        <Sidebar />
       </div>
+      <main className="flex-1 p-3 md:p-4 lg:p-5 lg:me-64">
+        <Header title="الإعلانات" description="روّج لمنتجاتك ومتجرك للوصول لزبائن أكثر" />
+        <div className="mt-4 md:mt-5 pb-28 space-y-6 max-w-3xl">
+          <div className="flex items-center justify-end gap-3">
+            {!creating && (
+              <Button onClick={() => setCreating(true)} className="h-9 text-sm">
+                + إعلان جديد
+              </Button>
+            )}
+          </div>
 
       {creating && (
         <div className="bg-card border border-border rounded-xl p-4 space-y-5">
@@ -452,6 +457,8 @@ export default function AdsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </div>
+      </main>
     </div>
   )
 }

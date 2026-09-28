@@ -8,7 +8,7 @@ export default function SettingsPage() {
       <div className="hidden lg:block">
         <Sidebar />
       </div>
-      <main className="flex-1 p-4 lg:p-6 lg:ms-64">
+      <main className="flex-1 p-4 lg:p-6 lg:me-64">
         <Header title="الإعدادات" description="أدر معلومات متجرك وتفضيلات الإشعارات والمظهر." />
         <div className="mt-6">
           <SettingsContent />

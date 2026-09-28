@@ -15,7 +15,7 @@ export default function DashboardPage() {
         <Sidebar />
       </div>
 
-      <main className="flex-1 p-3 md:p-4 lg:p-5 lg:ms-64">
+      <main className="flex-1 p-3 md:p-4 lg:p-5 lg:me-64">
         <Header
           title="لوحة تحكم التاجر"
           description="تابع مبيعاتك وديونك ومخزونك في لمحة واحدة."

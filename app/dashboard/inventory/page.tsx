@@ -7,7 +7,7 @@ export default function InventoryPage() {
       <div className="hidden lg:block">
         <Sidebar />
       </div>
-      <main className="flex-1 p-3 md:p-4 lg:p-5 lg:ms-64">
+      <main className="flex-1 p-3 md:p-4 lg:p-5 lg:me-64">
         <InventoryContent />
       </main>
     </div>

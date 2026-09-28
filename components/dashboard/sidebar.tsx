@@ -33,7 +33,7 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="fixed top-0 start-0 w-64 bg-card border-e border-border p-4 h-screen overflow-y-auto lg:block">
+    <aside className="fixed top-0 end-0 w-64 bg-card border-s border-border p-4 h-screen overflow-y-auto lg:block">
       <div className="flex items-center gap-2 mb-6 group cursor-pointer">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center transition-transform group-hover:scale-110 duration-300">
