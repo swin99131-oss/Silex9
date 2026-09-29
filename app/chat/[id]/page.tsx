@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ImagePlus, X, MoreVertical, ShieldAlert, Flag, User as UserIcon, Trash2, Reply } from "lucide-react";
+import { ImagePlus, X, MoreVertical, ShieldAlert, Flag, User as UserIcon, Trash2, Reply, Mic, Phone, Video } from "lucide-react";
 import {
   getMessages,
   sendMessage,
@@ -15,7 +15,10 @@ import {
   ChatMessage,
 } from "@/lib/chat";
 import { supabase } from "@/lib/supabase";
+import { useCall } from "@/components/CallProvider";
 import { ChatImage } from "@/components/ChatImage";
+import { VoiceRecorder } from "@/components/VoiceRecorder";
+import { VoiceMessage } from "@/components/VoiceMessage";
 import { getProduct } from "@/lib/catalog";
 
 const REPORT_REASONS = ["محتوى غير لائق", "إزعاج أو تحرش", "احتيال أو نصب", "سبب آخر"];
@@ -24,6 +27,7 @@ export default function ChatDetailPage() {
   const params = useParams();
   const router = useRouter();
   const convId = params.id as string;
+  const { startCall, inCall } = useCall();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
@@ -33,6 +37,7 @@ export default function ChatDetailPage() {
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [mediaKind, setMediaKind] = useState<"image" | "video" | null>(null);
   const [sending, setSending] = useState(false);
+  const [showRecorder, setShowRecorder] = useState(false);
   const [attachStory, setAttachStory] = useState<{ id: string; text: string; bg: string; image: string | null } | null>(null);
   const [attachProduct, setAttachProduct] = useState<{ id: string; name: string; price: number; image: string } | null>(null);
   const [partner, setPartner] = useState<{ id: string; name: string; avatar: string | null } | null>(null);
@@ -174,6 +179,25 @@ export default function ChatDetailPage() {
     }
   }
 
+  async function handleSendVoice(blob: Blob, duration: number) {
+    if (!userId) return;
+    setSending(true);
+    setShowRecorder(false);
+    try {
+      const path = `${convId}/${Date.now()}.webm`;
+      const { error: upErr } = await supabase.storage.from("chat").upload(path, blob, {
+        contentType: "audio/webm",
+      });
+      if (upErr) throw upErr;
+      await sendMessage(userId, convId, "🎤 رسالة صوتية", path, "audio", replyTo?.id);
+      setReplyTo(null);
+    } catch (err: any) {
+      alert(err.message || "تعذّر إرسال الرسالة الصوتية");
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function confirmDelete() {
     if (!userId || !deleteTarget) return;
     await deleteMessage(deleteTarget, userId);
@@ -244,10 +268,31 @@ export default function ChatDetailPage() {
           )}
         </div>
 
-        <div className="relative shrink-0">
-          <button onClick={() => setShowMenu((v) => !v)} className="w-9 h-9 rounded-full bg-chip flex items-center justify-center">
-            <MoreVertical size={17} />
-          </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {partner && (
+            <>
+              <button
+                onClick={() => startCall({ conversationId: convId, calleeId: partner.id, kind: "voice" })}
+                disabled={inCall}
+                className="w-9 h-9 rounded-full bg-chip flex items-center justify-center disabled:opacity-40"
+                aria-label="مكالمة صوتية"
+              >
+                <Phone size={16} />
+              </button>
+              <button
+                onClick={() => startCall({ conversationId: convId, calleeId: partner.id, kind: "video" })}
+                disabled={inCall}
+                className="w-9 h-9 rounded-full bg-chip flex items-center justify-center disabled:opacity-40"
+                aria-label="مكالمة فيديو"
+              >
+                <Video size={16} />
+              </button>
+            </>
+          )}
+          <div className="relative">
+            <button onClick={() => setShowMenu((v) => !v)} className="w-9 h-9 rounded-full bg-chip flex items-center justify-center">
+              <MoreVertical size={17} />
+            </button>
           {showMenu && (
             <div className="absolute left-0 top-11 bg-card shadow-float rounded-2xl overflow-hidden z-[70] w-44 border border-line/30">
               <button
@@ -276,6 +321,7 @@ export default function ChatDetailPage() {
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
 
@@ -301,6 +347,39 @@ export default function ChatDetailPage() {
 
                   {m.media_type === "image" && m.media_url && <ChatImage path={m.media_url} kind="image" />}
                   {m.media_type === "video" && m.media_url && <ChatImage path={m.media_url} kind="video" />}
+                  {m.media_type === "audio" && m.media_url && <VoiceMessage path={m.media_url} isMe={isMe} />}
+                  {m.media_type === "call" && (() => {
+                    const missed = m.call_status !== "completed";
+                    const isVideo = m.content.includes("فيديو");
+                    const CallIcon = isVideo ? Video : Phone;
+                    const title = missed
+                      ? m.call_status === "declined"
+                        ? `مكالمة ${isVideo ? "فيديو" : "صوتية"} مرفوضة`
+                        : `مكالمة ${isVideo ? "فيديو" : "صوتية"} فائتة`
+                      : `مكالمة ${isVideo ? "فيديو" : "صوتية"}`;
+                    const subtitle = missed
+                      ? "لم يتم الرد"
+                      : m.call_duration != null
+                        ? `${Math.floor(m.call_duration / 60).toString().padStart(2, "0")}:${(m.call_duration % 60).toString().padStart(2, "0")}`
+                        : "";
+                    return (
+                      <div className="flex items-center gap-2.5 min-w-[150px] py-0.5">
+                        <div
+                          className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                            missed ? "bg-red-500/15" : isMe ? "bg-white/15" : "bg-ink/10"
+                          }`}
+                        >
+                          <CallIcon size={15} className={missed ? "text-red-500" : ""} />
+                        </div>
+                        <div>
+                          <p className={`text-sm font-medium ${missed ? "text-red-500" : ""}`}>{title}</p>
+                          {subtitle && (
+                            <p className={`text-[11px] mt-0.5 ${isMe ? "opacity-70" : "text-muted"}`}>{subtitle}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {m.meta?.type === "story" && (
                   <div className="mb-2 w-32">
@@ -422,29 +501,40 @@ export default function ChatDetailPage() {
       )}
 
       <div className="p-3 border-t border-line/40 bg-paper">
-        <div className="flex items-center gap-2 bg-chip rounded-2xl p-1.5 focus-within:ring-1 focus-within:ring-ink/20 transition">
-          <label className="p-2 text-muted hover:text-ink transition cursor-pointer shrink-0">
-            <ImagePlus size={19} />
-            <input type="file" accept="image/*,video/*" className="hidden" onChange={handlePickMedia} />
-          </label>
+        {showRecorder ? (
+          <VoiceRecorder onSend={handleSendVoice} onCancel={() => setShowRecorder(false)} />
+        ) : (
+          <div className="flex items-center gap-2 bg-chip rounded-2xl p-1.5 focus-within:ring-1 focus-within:ring-ink/20 transition">
+            <label className="p-2 text-muted hover:text-ink transition cursor-pointer shrink-0">
+              <ImagePlus size={19} />
+              <input type="file" accept="image/*,video/*" className="hidden" onChange={handlePickMedia} />
+            </label>
 
-          <input
-            type="text"
-            maxLength={1000}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="اكتب رسالة..."
-            className="flex-1 bg-transparent px-2 text-sm text-ink placeholder-muted focus:outline-none"
-          />
-          <button
-            onClick={handleSend}
-            disabled={(!text.trim() && !mediaFile && !attachProduct && !attachStory) || sending}
-            className="bg-ink hover:opacity-90 disabled:opacity-30 text-white font-bold p-2.5 rounded-xl text-sm transition shrink-0"
-          >
-            {sending ? "..." : "إرسال"}
-          </button>
-        </div>
+            <input
+              type="text"
+              maxLength={1000}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder="اكتب رسالة..."
+              className="flex-1 bg-transparent px-2 text-sm text-ink placeholder-muted focus:outline-none"
+            />
+
+            {text.trim() || mediaFile || attachProduct || attachStory ? (
+              <button
+                onClick={handleSend}
+                disabled={sending}
+                className="bg-ink hover:opacity-90 disabled:opacity-30 text-white font-bold p-2.5 rounded-xl text-sm transition shrink-0"
+              >
+                {sending ? "..." : "إرسال"}
+              </button>
+            ) : (
+              <button onClick={() => setShowRecorder(true)} className="p-2 text-muted hover:text-ink transition shrink-0">
+                <Mic size={19} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* نافذة تأكيد الحذف */}

@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Mic, MicOff, Phone, PhoneOff, User as UserIcon, Video, VideoOff } from "lucide-react";
+import { Mic, MicOff, Phone, PhoneOff, User as UserIcon, Video, VideoOff, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import type {
   IAgoraRTCClient,
@@ -70,6 +70,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const [peer, setPeer] = useState<Peer | null>(null);
   const [muted, setMuted] = useState(false);
   const [camOff, setCamOff] = useState(false);
+  const [speakerOn, setSpeakerOn] = useState(true);
   const [seconds, setSeconds] = useState(0);
   const [remoteVideo, setRemoteVideo] = useState<IRemoteVideoTrack | null>(null);
   const [localVideo, setLocalVideo] = useState<ICameraVideoTrack | null>(null);
@@ -184,17 +185,50 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const endCall = useCallback(
     async (notify: boolean) => {
       const s = sessionRef.current;
+      const startedSeconds = seconds;
       if (s && notify) {
-        const status = phaseRef.current === "outgoing" ? "missed" : "ended";
-        await supabase
+        const wasConnected = phaseRef.current === "connected";
+        const status = wasConnected ? "ended" : phaseRef.current === "outgoing" ? "missed" : "declined";
+        const { data: updated } = await supabase
           .from("call_sessions")
           .update({ status, ended_at: new Date().toISOString() })
           .eq("id", s.id)
-          .in("status", ACTIVE);
+          .in("status", ACTIVE)
+          .select("id");
+
+        // نرسل رسالة الإنهاء فقط من الطرف الذي غيّر الحالة فعلياً أول مرة،
+        // لمنع تكرار فقاعة "مكالمة فائتة/منتهية" عند كلا الطرفين
+        const iWasFirst = (updated?.length ?? 0) > 0;
+        const me = uidRef.current;
+        if (me && iWasFirst) {
+          const callStatus = wasConnected ? "completed" : phaseRef.current === "outgoing" ? "missed" : "declined";
+          const label =
+            callStatus === "completed"
+              ? `${s.kind === "video" ? "🎥" : "📞"} مكالمة ${s.kind === "video" ? "فيديو" : "صوتية"} — ${Math.floor(startedSeconds / 60)
+                  .toString()
+                  .padStart(2, "0")}:${(startedSeconds % 60).toString().padStart(2, "0")}`
+              : callStatus === "missed"
+                ? `${s.kind === "video" ? "🎥" : "📞"} مكالمة ${s.kind === "video" ? "فيديو" : "صوتية"} فائتة`
+                : `${s.kind === "video" ? "🎥" : "📞"} مكالمة ${s.kind === "video" ? "فيديو" : "صوتية"} مرفوضة`;
+
+          await supabase.from("messages").insert({
+            conversation_id: s.conversation_id,
+            sender_id: me,
+            content: label,
+            media_type: "call",
+            call_duration: wasConnected ? startedSeconds : null,
+            call_status: callStatus,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("id", s.conversation_id);
+        }
       }
       await cleanup();
     },
-    [cleanup]
+    [cleanup, seconds]
   );
 
   const markConnected = useCallback(async () => {
@@ -399,6 +433,17 @@ export function CallProvider({ children }: { children: ReactNode }) {
     setCamOff(next);
   };
 
+  const toggleSpeaker = () => {
+    const next = !speakerOn;
+    setSpeakerOn(next);
+    try {
+      const audioEls = document.querySelectorAll("audio");
+      audioEls.forEach((el) => {
+        (el as HTMLAudioElement).volume = next ? 1 : 0.3;
+      });
+    } catch {}
+  };
+
   useEffect(() => {
     if (!uid) return;
     const ch = supabase
@@ -481,12 +526,23 @@ export function CallProvider({ children }: { children: ReactNode }) {
           )}
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
             {!(showVideo && phase === "connected") && (
-              <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-white/10">
-                {peer?.avatar ? (
-                  <img src={peer.avatar} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <UserIcon size={44} className="text-white/60" />
+              <div className="relative flex h-28 w-28 items-center justify-center">
+                {(phase === "incoming" || phase === "outgoing") && (
+                  <>
+                    <span className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
+                    <span
+                      className="absolute inset-0 rounded-full bg-white/10 animate-ping"
+                      style={{ animationDelay: "0.5s" }}
+                    />
+                  </>
                 )}
+                <div className="relative h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-white/10 flex">
+                  {peer?.avatar ? (
+                    <img src={peer.avatar} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <UserIcon size={44} className="text-white/60" />
+                  )}
+                </div>
               </div>
             )}
             <p className="font-display text-2xl">{peer?.name ?? "..."}</p>
@@ -512,6 +568,11 @@ export function CallProvider({ children }: { children: ReactNode }) {
                 {inRoom && isVideo && (
                   <button onClick={toggleCam} aria-label="الكاميرا" className={`${btn} ${camOff ? "bg-white text-ink" : "bg-white/15"}`}>
                     {camOff ? <VideoOff size={22} /> : <Video size={22} />}
+                  </button>
+                )}
+                {inRoom && !isVideo && (
+                  <button onClick={toggleSpeaker} aria-label="السبيكر" className={`${btn} ${speakerOn ? "bg-white text-ink" : "bg-white/15"}`}>
+                    {speakerOn ? <Volume2 size={22} /> : <VolumeX size={22} />}
                   </button>
                 )}
                 <button onClick={() => void endCall(true)} aria-label="إنهاء" className={`${btn} bg-red-600`}>
