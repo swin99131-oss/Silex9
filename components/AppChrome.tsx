@@ -1,5 +1,6 @@
 "use client";
 
+import { CallProvider } from "@/components/CallProvider";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { usePathname, useRouter } from "next/navigation";
@@ -88,6 +89,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     ) : null;
 
   return (
+    <CallProvider>
     <div className="min-h-screen bg-paper text-[#1e3a5f]">
       {/* شريط جانبي - كمبيوتر */}
       <aside className="hidden md:flex fixed top-0 bottom-0 right-0 w-64 flex-col border-l-2 border-[#1e3a5f]/15 bg-paper p-4 z-40">
@@ -185,5 +187,6 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
     </div>
+    </CallProvider>
   );
 }
