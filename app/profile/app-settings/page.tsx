@@ -1,5 +1,6 @@
 "use client";
 
+import { FileText, Mail, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ComponentType, ReactNode } from "react";
@@ -45,6 +46,8 @@ function Row({ href, icon: Icon, label, hint }: { href: string; icon: IconType; 
     </Link>
   );
 }
+
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
 
 export default function AppSettingsPage() {
   const router = useRouter();
@@ -96,6 +99,12 @@ export default function AppSettingsPage() {
 
       <Section title="الخصوصية">
         <Row href="/profile/blocked" icon={ShieldOff} label="المستخدمون المحظورون" />
+      </Section>
+
+      <Section title="المساعدة والقانوني">
+        <Row href="/privacy" icon={ShieldCheck} label="سياسة الخصوصية" />
+        <Row href="/terms" icon={FileText} label="شروط الاستخدام" />
+        {SUPPORT_EMAIL && <Row href={`mailto:${SUPPORT_EMAIL}`} icon={Mail} label="تواصل مع الدعم" />}
       </Section>
 
       <button

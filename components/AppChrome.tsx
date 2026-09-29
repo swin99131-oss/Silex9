@@ -19,7 +19,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     pathname === "/login" ||
     pathname === "/register" ||
     pathname.startsWith("/onboarding") ||
-    pathname.startsWith("/auth");
+    pathname.startsWith("/auth") ||
+    pathname === "/privacy" ||
+    pathname === "/terms";
 
   const [ready, setReady] = useState(false);
   const [isMerchant, setIsMerchant] = useState(false);
