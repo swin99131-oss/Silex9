@@ -91,7 +91,7 @@ export default function ProfilePage() {
         <Link href="/people" aria-label="بحث عن أشخاص" className="w-9 h-9 rounded-full bg-chip flex items-center justify-center">
           <Search size={16} />
         </Link>
-        <Link href="/profile/settings" aria-label="الإعدادات" className="w-9 h-9 rounded-full bg-chip flex items-center justify-center">
+        <Link href="/profile/app-settings" aria-label="الإعدادات" className="w-9 h-9 rounded-full bg-chip flex items-center justify-center">
           <Settings size={17} />
         </Link>
       </div>
@@ -152,6 +152,11 @@ export default function ProfilePage() {
             التبديل إلى حساب تاجر
           </Link>
         )}
+        {/* إعدادات التطبيق */}
+        <Link href="/profile/app-settings" className="flex items-center justify-center gap-2 border border-line rounded-pill py-2.5 text-sm font-semibold">
+          <Settings size={15} />
+          الإعدادات
+        </Link>
       </div>
 
       <div className="mt-5 px-6">
