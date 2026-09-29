@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordRow } from "@/components/PasswordRow";
 import { DeleteAccount } from "@/components/DeleteAccount";
 import { FileText, Mail, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -83,6 +84,7 @@ export default function AppSettingsPage() {
 
       <Section title="الحساب">
         <Row href="/profile/settings" icon={User} label="تعديل الملف الشخصي" hint="الاسم والصورة والنبذة والروابط" />
+        <PasswordRow />
       </Section>
 
       {isMerchant ? (
@@ -118,6 +120,8 @@ export default function AppSettingsPage() {
       </button>
 
       <DeleteAccount />
+
+      <p className="text-center text-[11px] text-muted">ساليكس · الإصدار 1.0.0</p>
     </div>
   );
 }
