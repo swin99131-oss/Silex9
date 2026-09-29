@@ -1,5 +1,6 @@
 "use client";
 
+import { DeleteAccount } from "@/components/DeleteAccount";
 import { FileText, Mail, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -115,6 +116,8 @@ export default function AppSettingsPage() {
         <LogOut size={16} />
         تسجيل الخروج
       </button>
+
+      <DeleteAccount />
     </div>
   );
 }
