@@ -83,6 +83,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const ringTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ringLoop = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioCtx = useRef<AudioContext | null>(null);
+  const ringAudio = useRef<HTMLAudioElement | null>(null);
   const remoteEl = useRef<HTMLDivElement>(null);
   const localEl = useRef<HTMLDivElement>(null);
 
@@ -96,6 +97,12 @@ export function CallProvider({ children }: { children: ReactNode }) {
       clearInterval(ringLoop.current);
       ringLoop.current = null;
     }
+    if (ringAudio.current) {
+      try {
+        ringAudio.current.pause();
+        ringAudio.current.currentTime = 0;
+      } catch {}
+    }
     try {
       navigator.vibrate?.(0);
     } catch {}
@@ -104,31 +111,23 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const startRing = useCallback(
     (vibrate: boolean) => {
       stopRing();
-      const beep = () => {
-        try {
-          const AC =
-            window.AudioContext ??
-            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-          if (!audioCtx.current) audioCtx.current = new AC();
-          const ctx = audioCtx.current;
-          if (ctx.state === "suspended") void ctx.resume();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.frequency.value = 440;
-          gain.gain.value = 0.06;
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.35);
-        } catch {}
-        if (vibrate) {
+      try {
+        if (!ringAudio.current) {
+          ringAudio.current = new Audio("/sounds/ringtone.wav");
+          ringAudio.current.loop = true;
+        }
+        ringAudio.current.currentTime = 0;
+        void ringAudio.current.play().catch(() => {});
+      } catch {}
+      if (vibrate) {
+        const pulse = () => {
           try {
             navigator.vibrate?.([300, 150, 300]);
           } catch {}
-        }
-      };
-      beep();
-      ringLoop.current = setInterval(beep, 2000);
+        };
+        pulse();
+        ringLoop.current = setInterval(pulse, 2000);
+      }
     },
     [stopRing]
   );
@@ -546,6 +545,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
               </div>
             )}
             <p className="font-display text-2xl">{peer?.name ?? "..."}</p>
+<p className="flex items-center gap-1.5 text-xs text-white/60">{isVideo ? <Video size={14} /> : <Phone size={14} />}{isVideo ? "مكالمة فيديو" : "مكالمة صوتية"}</p>
             <p className="text-sm text-white/70">{statusText}</p>
           </div>
           <div className="relative z-10 flex items-center justify-center gap-6 pb-[max(3rem,env(safe-area-inset-bottom))] pt-6">
@@ -560,7 +560,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
               </>
             ) : (
               <>
-                {inRoom && (
+                {(inRoom || phase === "outgoing") && (
                   <button onClick={toggleMute} aria-label="كتم" className={`${btn} ${muted ? "bg-white text-ink" : "bg-white/15"}`}>
                     {muted ? <MicOff size={22} /> : <Mic size={22} />}
                   </button>
@@ -570,7 +570,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
                     {camOff ? <VideoOff size={22} /> : <Video size={22} />}
                   </button>
                 )}
-                {inRoom && !isVideo && (
+                {(inRoom || phase === "outgoing") && (
                   <button onClick={toggleSpeaker} aria-label="السبيكر" className={`${btn} ${speakerOn ? "bg-white text-ink" : "bg-white/15"}`}>
                     {speakerOn ? <Volume2 size={22} /> : <VolumeX size={22} />}
                   </button>

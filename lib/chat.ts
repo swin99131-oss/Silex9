@@ -38,7 +38,9 @@ content: string;
 
 media_url?: string | null;
 
-media_type?: "image" | "audio" | "video" | "file" | null;
+media_type?: "image" | "audio" | "video" | "file" | "call" | null;
+  call_status?: "completed" | "missed" | "declined" | null;
+  call_duration?: number | null;
 
 reply_to_id?: string | null;
 
