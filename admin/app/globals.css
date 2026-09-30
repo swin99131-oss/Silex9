@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@theme inline {
+  --color-background: var(--background); --color-foreground: var(--foreground); --color-card: var(--card); --color-card-foreground: var(--card-foreground); --color-popover: var(--popover); --color-popover-foreground: var(--popover-foreground); --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground); --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground); --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground); --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground); --color-destructive: var(--destructive); --color-destructive-foreground: var(--destructive-foreground); --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring); --color-sidebar: var(--sidebar); --color-sidebar-foreground: var(--sidebar-foreground); --color-sidebar-primary: var(--sidebar-primary); --color-sidebar-primary-foreground: var(--sidebar-primary-foreground); --color-sidebar-accent: var(--sidebar-accent); --color-sidebar-accent-foreground: var(--sidebar-accent-foreground); --color-sidebar-border: var(--sidebar-border); --color-sidebar-ring: var(--sidebar-ring); --radius-sm: calc(var(--radius) * .6); --radius-md: calc(var(--radius) * .8); --radius-lg: var(--radius); --radius-xl: calc(var(--radius) * 1.25); --radius-2xl: calc(var(--radius) * 1.5); --radius-3xl: calc(var(--radius) * 1.75);
+}
+
+:root {
+  color-scheme: light;
+  --background: #FAF8F5; --foreground: #111111; --card: #FFFFFF; --card-foreground: #111111; --popover: #FFFFFF; --popover-foreground: #111111; --primary: #111111; --primary-foreground: #FFFFFF; --secondary: #F2F1ED; --secondary-foreground: #111111; --muted: #F2F1ED; --muted-foreground: #8B8B8B; --accent: #F2F1ED; --accent-foreground: #111111; --destructive: #DC2626; --destructive-foreground: #FFFFFF; --border: #ECECE8; --input: #ECECE8; --ring: #111111; --success: #16A34A; --sidebar: #FFFFFF; --sidebar-foreground: #111111; --sidebar-primary: #111111; --sidebar-primary-foreground: #FFFFFF; --sidebar-accent: #F2F1ED; --sidebar-accent-foreground: #111111; --sidebar-border: #ECECE8; --sidebar-ring: #111111; --radius: 1.75rem;
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; font-family: var(--font-inter), 'Tajawal', 'Cairo', sans-serif; }
+  h1, h2, h3, h4 { font-family: var(--font-fraunces), 'Tajawal', 'Cairo', serif; }
+}

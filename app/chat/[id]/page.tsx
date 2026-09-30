@@ -409,7 +409,7 @@ export default function ChatDetailPage() {
                   </Link>
                 )}
 
-                {m.content && !(m.meta?.type === "product" && m.content === `🛍️ ${m.meta.name}`) && (
+                {m.content && m.media_type !== "call" && !(m.meta?.type === "product" && m.content === `🛍️ ${m.meta.name}`) && (
                   <p className="whitespace-pre-wrap break-words">{m.content}</p>
                 )}
 

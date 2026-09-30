@@ -203,12 +203,12 @@ export function CallProvider({ children }: { children: ReactNode }) {
           const callStatus = wasConnected ? "completed" : phaseRef.current === "outgoing" ? "missed" : "declined";
           const label =
             callStatus === "completed"
-              ? `${s.kind === "video" ? "🎥" : "📞"} مكالمة ${s.kind === "video" ? "فيديو" : "صوتية"} — ${Math.floor(startedSeconds / 60)
+              ? `مكالمة ${s.kind === "video" ? "فيديو" : "صوتية"} — ${Math.floor(startedSeconds / 60)
                   .toString()
                   .padStart(2, "0")}:${(startedSeconds % 60).toString().padStart(2, "0")}`
               : callStatus === "missed"
-                ? `${s.kind === "video" ? "🎥" : "📞"} مكالمة ${s.kind === "video" ? "فيديو" : "صوتية"} فائتة`
-                : `${s.kind === "video" ? "🎥" : "📞"} مكالمة ${s.kind === "video" ? "فيديو" : "صوتية"} مرفوضة`;
+                ? `مكالمة ${s.kind === "video" ? "فيديو" : "صوتية"} فائتة`
+                : `مكالمة ${s.kind === "video" ? "فيديو" : "صوتية"} مرفوضة`;
 
           await supabase.from("messages").insert({
             conversation_id: s.conversation_id,
