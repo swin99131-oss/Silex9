@@ -199,3 +199,19 @@ export async function listMessages(conversationId: string): Promise<ChatMessage[
   if (error) throw new Error(error.message)
   return (data ?? []) as ChatMessage[]
 }
+
+export const listCampaignsByStatus = (o: ListOpts = {}, status?: string) =>
+  listWithCity<Campaign>('campaigns', 'merchant_id', o, (q) =>
+    status ? q.eq('status', status) : q,
+  )
+
+export async function setCampaignStatus(id: string, status: 'active' | 'rejected' | 'paused') {
+  const { data, error } = await supabase
+    .from('campaigns')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select('id')
+  if (error) throw new Error(error.message)
+  if (!data?.length) throw new Error('لم يتم التعديل، تحقق من الصلاحيات')
+  await logAction('campaign.' + status, 'campaigns', id)
+}
