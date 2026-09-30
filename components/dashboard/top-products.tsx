@@ -1,42 +1,46 @@
 "use client"
 
-import { Card } from "@/components/ui/card"
+import Link from "next/link"
+import { Star } from "lucide-react"
 import { useStore, formatIQD, toArabicNumber } from "@/components/store/store-context"
 
 export function TopProducts() {
   const { topProducts } = useStore()
 
   return (
-    <Card className="p-6 rounded-2xl border-0 shadow-sm bg-white transition-all duration-500 hover:shadow-md">
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-primary text-sm">★</span>
-          </div>
-          <h2 className="text-lg font-semibold text-foreground">المنتجات الأكثر مبيعاً</h2>
+    <section className="rounded-xl border border-border bg-card p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Star aria-hidden="true" className="size-4" />
+          </span>
+          <h2 className="text-lg font-semibold">المنتجات الأكثر مبيعاً</h2>
         </div>
-        <span className="text-xs text-muted-foreground">إجمالي المبيعات</span>
+        <Link href="/dashboard/analytics" className="text-xs text-muted underline">
+          التحليل
+        </Link>
       </div>
+
       {topProducts.length === 0 ? (
-        <div className="py-8 text-center text-sm text-muted-foreground">لا توجد مبيعات مسجّلة بعد.</div>
+        <p className="py-6 text-center text-sm text-muted">لا توجد مبيعات مسجّلة بعد.</p>
       ) : (
-        <div className="space-y-2">
+        <ul className="divide-y divide-border">
           {topProducts.map((p, i) => (
-            <div key={p.name} className="flex items-center justify-between py-2 px-3 rounded-xl bg-secondary/40">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
+            <li key={p.name} className="flex items-center justify-between gap-3 py-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-chip text-xs font-semibold">
                   {toArabicNumber(i + 1)}
                 </span>
-                <span className="text-sm font-medium text-foreground truncate">{p.name}</span>
+                <span className="truncate text-sm font-medium">{p.name}</span>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <span className="text-xs text-muted-foreground">{toArabicNumber(p.quantity)} وحدة</span>
+              <div className="flex shrink-0 items-center gap-3">
+                <span className="text-xs text-muted">{toArabicNumber(p.quantity)} وحدة</span>
                 <span className="text-sm font-semibold text-emerald-700">{formatIQD(p.total)}</span>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </Card>
+    </section>
   )
 }

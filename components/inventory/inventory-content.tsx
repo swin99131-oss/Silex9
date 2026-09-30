@@ -2,13 +2,9 @@
 
 import { useMemo, useState } from "react"
 import { Header } from "@/components/dashboard/header"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -17,19 +13,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Package, PackageX, Boxes, TrendingDown, SearchX, Plus } from "lucide-react"
 import { useStore, formatIQD, toArabicNumber, normalizeDigits, type Product } from "@/components/store/store-context"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 
 function statusOf(p: Product) {
-  if (p.stock === 0) return { label: "نفاذ", className: "bg-red-100 text-red-700 border-red-200" }
-  if (p.stock <= 15) return { label: "منخفض", className: "bg-orange-100 text-orange-700 border-orange-200" }
-  return { label: "متوفر", className: "bg-emerald-100 text-emerald-700 border-emerald-200" }
+  if (p.stock === 0) return { label: "نفاذ", chip: "bg-red-100 text-red-700", bar: "bg-red-500" }
+  if (p.stock <= 15) return { label: "منخفض", chip: "bg-orange-100 text-orange-700", bar: "bg-orange-500" }
+  return { label: "متوفر", chip: "bg-emerald-100 text-emerald-700", bar: "bg-emerald-500" }
 }
-
 
 export function InventoryContent() {
   const { products, addProduct, restockProduct, getOrCreateCategory, query, isLoading, dataError } = useStore()
@@ -40,6 +33,7 @@ export function InventoryContent() {
   const [stock, setStock] = useState("")
   const [price, setPrice] = useState("")
   const [image, setImage] = useState<File | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const stats = useMemo(() => {
     const total = products.length
@@ -47,12 +41,17 @@ export function InventoryContent() {
     const out = products.filter((p) => p.stock === 0).length
     const value = products.reduce((s, p) => s + p.stock * p.price, 0)
     return [
-      { title: "إجمالي المنتجات", value: toArabicNumber(total), icon: Boxes, accent: "text-emerald-700", bg: "bg-emerald-50" },
-      { title: "منتجات قاربت النفاد", value: toArabicNumber(low), icon: TrendingDown, accent: "text-orange-700", bg: "bg-orange-50" },
-      { title: "نفدت من المخزن", value: toArabicNumber(out), icon: PackageX, accent: "text-red-700", bg: "bg-red-50" },
-      { title: "قيمة المخزون", value: formatIQD(value), icon: Package, accent: "text-emerald-700", bg: "bg-emerald-50" },
+      { title: "إجمالي المنتجات", value: toArabicNumber(total), icon: Boxes, iconClass: "bg-emerald-100 text-emerald-700" },
+      { title: "منتجات قاربت النفاد", value: toArabicNumber(low), icon: TrendingDown, iconClass: "bg-orange-100 text-orange-700" },
+      { title: "نفدت من المخزن", value: toArabicNumber(out), icon: PackageX, iconClass: "bg-red-100 text-red-700" },
+      { title: "قيمة المخزون", value: formatIQD(value), icon: Package, iconClass: "bg-primary/10 text-primary" },
     ]
   }, [products])
+
+  const categories = useMemo(
+    () => ["الكل", ...Array.from(new Set(products.map((p) => p.category))).slice(0, 3)],
+    [products],
+  )
 
   const filtered = useMemo(() => {
     const q = query.trim()
@@ -74,11 +73,13 @@ export function InventoryContent() {
       toast.error("يرجى كتابة تصنيف للمنتج")
       return
     }
+    setSaving(true)
     try {
       let imageUrl: string | null = null
       if (image) {
         if (!supabase) throw new Error("لم يتم إعداد اتصال Supabase")
-        const filePath = `${crypto.randomUUID()}-${image.name}`
+        const ext = (image.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")
+        const filePath = `${crypto.randomUUID()}.${ext || "jpg"}`
         const { error: uploadError } = await supabase.storage.from("product-images").upload(filePath, image)
         if (uploadError) throw uploadError
         const { data } = supabase.storage.from("product-images").getPublicUrl(filePath)
@@ -95,6 +96,8 @@ export function InventoryContent() {
       setOpen(false)
     } catch (error) {
       toast.error((error as any)?.message || "تعذر إضافة المنتج")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -107,188 +110,158 @@ export function InventoryContent() {
     }
   }
 
+  const field = "h-11 rounded-xl"
+
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <Header
         title="المخازن"
         description="تابع كميات المنتجات وقيمة المخزون والأصناف القريبة من النفاد."
         actions={
-          <Button
-            onClick={() => setOpen(true)}
-            className="w-full sm:w-auto h-9 text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:shadow-primary/30"
-          >
+          <Button onClick={() => setOpen(true)} className="h-11 rounded-full px-6">
             + إضافة منتج
           </Button>
         }
       />
 
-      <div className="mt-4 md:mt-5 space-y-4">
-        {dataError && <p className="text-sm text-destructive">{dataError}</p>}
-        {isLoading && <p className="text-sm text-muted-foreground">جار تحميل المنتجات...</p>}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {stats.map((item) => (
-            <Card key={item.title} className={`p-4 rounded-2xl border-0 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${item.bg ?? "bg-white"}`}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground">{item.title}</span>
-                <item.icon className={`w-4 h-4 ${item.accent ?? "text-primary"}`} />
-              </div>
-              <p className={`text-xl font-bold ${item.accent ?? "text-foreground"}`}>{item.value}</p>
-            </Card>
-          ))}
-        </div>
+      {dataError && <p className="rounded-lg bg-red-100 p-3 text-sm text-red-800">{dataError}</p>}
+      {isLoading && <p className="text-sm text-muted">جار تحميل المنتجات...</p>}
 
-        <Card className="p-0 overflow-hidden">
-          <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-foreground">قائمة المنتجات</h2>
-            <div className="flex flex-wrap gap-1.5">
-              {["الكل", ...Array.from(new Set(products.map((p) => p.category))).slice(0, 3)].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setFilter(cat)}
-                  className={`text-xs px-3 py-1 rounded-full border transition-all duration-200 ${
-                    filter === cat
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-transparent text-muted-foreground border-border hover:border-primary/50"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {stats.map((item) => (
+          <article key={item.title} className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm text-muted">{item.title}</p>
+              <span className={`flex size-9 shrink-0 items-center justify-center rounded-full ${item.iconClass}`}>
+                <item.icon aria-hidden="true" className="size-4" />
+              </span>
             </div>
-          </div>
-
-          {filtered.length === 0 ? (
-            <Empty className="py-12">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <SearchX className="w-6 h-6" />
-                </EmptyMedia>
-                <EmptyTitle>لا توجد منتجات</EmptyTitle>
-                <EmptyDescription>لم يتم العثور على منتجات مطابقة.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">المنتج</TableHead>
-                    <TableHead className="text-right">الصنف</TableHead>
-                    <TableHead className="text-right">المخزون</TableHead>
-                    <TableHead className="text-right">السعر</TableHead>
-                    <TableHead className="text-right">الحالة</TableHead>
-                    <TableHead className="text-right">إجراء</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((product) => {
-                    const status = statusOf(product)
-                    return (
-                      <TableRow key={product.id} className="hover:bg-secondary/40 transition-colors">
-                        <TableCell className="font-medium text-foreground">{product.name}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{product.category}</TableCell>
-                        <TableCell className="w-40">
-                          <div className="flex items-center gap-2">
-                            <Progress value={(product.stock / product.max) * 100} className="h-1.5 flex-1" />
-                            <span className="text-xs text-muted-foreground w-6 text-left">
-                              {toArabicNumber(product.stock)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-semibold text-foreground whitespace-nowrap">
-                          {formatIQD(product.price)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`font-normal border ${status.className}`}>
-                            {status.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRestock(product.id, product.name)}
-                            className="h-7 text-xs bg-transparent gap-1"
-                          >
-                            <Plus className="w-3 h-3" /> استلام
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </Card>
+            <p className="mt-4 truncate text-2xl font-semibold tracking-tight">{item.value}</p>
+          </article>
+        ))}
       </div>
 
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="flex flex-col justify-between gap-3 border-b border-border p-5 sm:flex-row sm:items-center">
+          <h2 className="text-lg font-semibold">قائمة المنتجات</h2>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setFilter(cat)}
+                className={`rounded-full border px-4 py-1.5 text-xs transition ${
+                  filter === cat
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border text-muted hover:border-foreground/30"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-14 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-chip">
+              <SearchX aria-hidden="true" className="size-5 text-muted" />
+            </span>
+            <p className="font-medium">لا توجد منتجات</p>
+            <p className="text-sm text-muted">لم يتم العثور على منتجات مطابقة.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-sm">
+              <thead>
+                <tr className="border-b border-border text-xs text-muted">
+                  <th className="px-5 py-3 font-medium">المنتج</th>
+                  <th className="px-5 py-3 font-medium">الصنف</th>
+                  <th className="px-5 py-3 font-medium">المخزون</th>
+                  <th className="px-5 py-3 font-medium">السعر</th>
+                  <th className="px-5 py-3 font-medium">الحالة</th>
+                  <th className="px-5 py-3 font-medium" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((product) => {
+                  const status = statusOf(product)
+                  const pct = Math.min(100, Math.max(0, (product.stock / (product.max || 1)) * 100))
+                  return (
+                    <tr key={product.id} className="hover:bg-chip/50">
+                      <td className="px-5 py-4 font-medium">{product.name}</td>
+                      <td className="px-5 py-4 text-muted">{product.category}</td>
+                      <td className="w-48 px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-chip">
+                            <span className={`block h-full rounded-full ${status.bar}`} style={{ width: `${pct}%` }} />
+                          </span>
+                          <span className="w-8 text-xs text-muted">{toArabicNumber(product.stock)}</span>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 font-semibold">{formatIQD(product.price)}</td>
+                      <td className="px-5 py-4">
+                        <span className={`rounded-full px-3 py-1 text-[11px] ${status.chip}`}>{status.label}</span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRestock(product.id, product.name)}
+                          className="h-8 gap-1 rounded-full bg-transparent px-4 text-xs"
+                        >
+                          <Plus aria-hidden="true" className="size-3" /> استلام
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader className="text-right">
             <DialogTitle>إضافة منتج جديد</DialogTitle>
             <DialogDescription>أدخل تفاصيل المنتج وكميته وسعره.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1.5">
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
               <Label htmlFor="prod-name">اسم المنتج</Label>
-              <Input
-                id="prod-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="مثال: رز عنبر ٥ كغم"
-              />
+              <Input id="prod-name" className={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: رز عنبر ٥ كغم" />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="prod-category">الصنف</Label>
-              <Input
-                id="prod-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="اكتب أي تصنيف يناسب منتجك"
-              />
+              <Input id="prod-category" className={field} value={category} onChange={(e) => setCategory(e.target.value)} placeholder="اكتب أي تصنيف يناسب منتجك" />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label htmlFor="prod-stock">الكمية</Label>
-                <Input
-                  id="prod-stock"
-                  type="text" inputMode="decimal"
-                  value={stock}
-                  onChange={(e) => setStock(e.target.value)}
-                  placeholder="50"
-                  dir="ltr"
-                  className="text-right"
-                />
+                <Input id="prod-stock" type="text" inputMode="decimal" className={`${field} text-right`} value={stock} onChange={(e) => setStock(e.target.value)} placeholder="50" dir="ltr" />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label htmlFor="prod-price">السعر (د.ع)</Label>
-                <Input
-                  id="prod-price"
-                  type="text" inputMode="decimal"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="3000"
-                  dir="ltr"
-                  className="text-right"
-                />
+                <Input id="prod-price" type="text" inputMode="decimal" className={`${field} text-right`} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="3000" dir="ltr" />
               </div>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="prod-image">صورة المنتج</Label>
-              <Input id="prod-image" type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
+              <Input id="prod-image" type="file" accept="image/*" className="h-11 rounded-xl" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setOpen(false)} className="bg-transparent">
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)} className="h-11 rounded-full bg-transparent px-6">
               إلغاء
             </Button>
-            <Button onClick={handleAdd} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              حفظ المنتج
+            <Button onClick={handleAdd} disabled={saving} className="h-11 rounded-full px-6">
+              {saving ? "جارٍ الحفظ..." : "حفظ المنتج"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   )
 }

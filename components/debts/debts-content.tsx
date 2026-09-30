@@ -2,13 +2,9 @@
 
 import { useMemo, useState } from "react"
 import { Header } from "@/components/dashboard/header"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -17,7 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Wallet, ArrowDownCircle, ArrowUpCircle, SearchX } from "lucide-react"
 import { useStore, formatIQD, normalizeDigits } from "@/components/store/store-context"
 import { toast } from "sonner"
@@ -33,12 +28,12 @@ export function DebtsContent() {
   const summary = useMemo(() => {
     const active = debtors.filter((d) => !d.paid)
     const total = active.reduce((s, d) => s + d.amount, 0)
-    const dueSoon = active.filter((d) => d.overdue).reduce((s, d) => s + d.amount, 0)
+    const overdue = active.filter((d) => d.overdue).reduce((s, d) => s + d.amount, 0)
     const collected = debtors.filter((d) => d.paid).reduce((s, d) => s + d.amount, 0)
     return [
-      { title: "إجمالي الديون", value: formatIQD(total), icon: Wallet, accent: "text-orange-700", bg: "bg-orange-50" },
-      { title: "متأخر السداد", value: formatIQD(dueSoon), icon: ArrowUpCircle, accent: "text-red-700", bg: "bg-red-50" },
-      { title: "تم تحصيله", value: formatIQD(collected), icon: ArrowDownCircle, accent: "text-emerald-700", bg: "bg-emerald-50" },
+      { title: "إجمالي الديون", value: formatIQD(total), icon: Wallet, iconClass: "bg-orange-100 text-orange-700" },
+      { title: "متأخر السداد", value: formatIQD(overdue), icon: ArrowUpCircle, iconClass: "bg-red-100 text-red-700" },
+      { title: "تم تحصيله", value: formatIQD(collected), icon: ArrowDownCircle, iconClass: "bg-emerald-100 text-emerald-700" },
     ]
   }, [debtors])
 
@@ -54,13 +49,15 @@ export function DebtsContent() {
       toast.error("يرجى إدخال اسم الزبون ومبلغ صحيح")
       return
     }
+    const today = new Date().toISOString().slice(0, 10)
+    const due = date || today
     try {
       await addDebtor({
         name: name.trim(),
         phone: phone.trim() || "—",
         amount: value,
-        date: date || new Date().toISOString().slice(0, 10),
-        overdue: true,
+        date: due,
+        overdue: due < today,
       })
       toast.success(`تمت إضافة دين ${name.trim()} بنجاح`)
       setName("")
@@ -82,171 +79,161 @@ export function DebtsContent() {
     }
   }
 
+  const field = "h-11 rounded-xl"
+
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <Header
         title="دفتر الديون"
         description="سجّل ديون الزبائن وتابع تواريخ الاستحقاق والتحصيل."
         actions={
-          <Button
-            onClick={() => setOpen(true)}
-            className="w-full sm:w-auto h-9 text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:shadow-primary/30"
-          >
+          <Button onClick={() => setOpen(true)} className="h-11 rounded-full px-6">
             + إضافة دين جديد
           </Button>
         }
       />
 
-      <div className="mt-4 md:mt-5 space-y-4">
-        {dataError && <p className="text-sm text-destructive">{dataError}</p>}
-        {isLoading && <p className="text-sm text-muted-foreground">جار تحميل الديون...</p>}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {summary.map((item) => (
-            <Card key={item.title} className={`p-4 rounded-2xl border-0 shadow-sm flex items-center gap-3 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${item.bg ?? "bg-white"}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${item.bg ?? "bg-secondary"}`}>
-                <item.icon className={`w-5 h-5 ${item.accent}`} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">{item.title}</p>
-                <p className={`text-lg font-bold truncate ${item.accent}`}>{item.value}</p>
-              </div>
-            </Card>
-          ))}
-        </div>
+      {dataError && <p className="rounded-lg bg-red-100 p-3 text-sm text-red-800">{dataError}</p>}
+      {isLoading && <p className="text-sm text-muted">جار تحميل الديون...</p>}
 
-        <Card className="p-0 overflow-hidden">
-          <div className="p-4 border-b border-border">
-            <h2 className="text-lg font-semibold text-foreground">قائمة الزبائن المدينين</h2>
-          </div>
-
-          {filtered.length === 0 ? (
-            <Empty className="py-12">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <SearchX className="w-6 h-6" />
-                </EmptyMedia>
-                <EmptyTitle>لا توجد نتائج</EmptyTitle>
-                <EmptyDescription>لم يتم العثور على زبائن مطابقين لبحثك.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">الزبون</TableHead>
-                    <TableHead className="text-right">الهاتف</TableHead>
-                    <TableHead className="text-right">المبلغ</TableHead>
-                    <TableHead className="text-right">تاريخ الاستحقاق</TableHead>
-                    <TableHead className="text-right">الحالة</TableHead>
-                    <TableHead className="text-right">إجراء</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((debtor) => (
-                    <TableRow key={debtor.id} className="hover:bg-secondary/40 transition-colors">
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="w-8 h-8">
-                            <AvatarFallback className="text-xs bg-secondary">{debtor.name.slice(0, 2)}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium text-foreground">{debtor.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm" dir="ltr">
-                        {debtor.phone}
-                      </TableCell>
-                      <TableCell className="font-semibold text-foreground whitespace-nowrap">
-                        {formatIQD(debtor.amount)}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{debtor.date}</TableCell>
-                      <TableCell>
-                        {debtor.paid ? (
-                          <Badge className="font-normal border bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
-                            تم الاستلام
-                          </Badge>
-                        ) : (
-                          <Badge className={`font-normal border ${debtor.overdue ? "bg-red-100 text-red-700 border-red-200" : "bg-orange-100 text-orange-700 border-orange-200"}`}>
-                            {debtor.overdue ? "متأخر" : "ضمن المدة"}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={debtor.paid}
-                          onClick={() => handleCollect(debtor.id, debtor.name)}
-                          className="h-7 text-xs bg-transparent disabled:opacity-40"
-                        >
-                          {debtor.paid ? "تم الاستلام" : "استلام"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {summary.map((item) => (
+          <article key={item.title} className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm text-muted">{item.title}</p>
+              <span className={`flex size-9 shrink-0 items-center justify-center rounded-full ${item.iconClass}`}>
+                <item.icon aria-hidden="true" className="size-4" />
+              </span>
             </div>
-          )}
-        </Card>
+            <p className="mt-4 truncate text-2xl font-semibold tracking-tight">{item.value}</p>
+          </article>
+        ))}
       </div>
 
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="border-b border-border p-5">
+          <h2 className="text-lg font-semibold">قائمة الزبائن المدينين</h2>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-14 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-chip">
+              <SearchX aria-hidden="true" className="size-5 text-muted" />
+            </span>
+            <p className="font-medium">لا توجد نتائج</p>
+            <p className="text-sm text-muted">لم يتم العثور على زبائن مطابقين لبحثك.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-sm">
+              <thead>
+                <tr className="border-b border-border text-xs text-muted">
+                  <th className="px-5 py-3 font-medium">الزبون</th>
+                  <th className="px-5 py-3 font-medium">الهاتف</th>
+                  <th className="px-5 py-3 font-medium">المبلغ</th>
+                  <th className="px-5 py-3 font-medium">تاريخ الاستحقاق</th>
+                  <th className="px-5 py-3 font-medium">الحالة</th>
+                  <th className="px-5 py-3 font-medium" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((debtor) => (
+                  <tr key={debtor.id} className="hover:bg-chip/50">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold">
+                          {debtor.name.slice(0, 2)}
+                        </span>
+                        <span className="font-medium">{debtor.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-muted" dir="ltr">{debtor.phone}</td>
+                    <td className="whitespace-nowrap px-5 py-4 font-semibold">{formatIQD(debtor.amount)}</td>
+                    <td className="px-5 py-4 text-muted">{debtor.date}</td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={`rounded-full px-3 py-1 text-[11px] ${
+                          debtor.paid
+                            ? "bg-emerald-100 text-emerald-700"
+                            : debtor.overdue
+                              ? "bg-red-100 text-red-700"
+                              : "bg-orange-100 text-orange-700"
+                        }`}
+                      >
+                        {debtor.paid ? "تم الاستلام" : debtor.overdue ? "متأخر" : "ضمن المدة"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={debtor.paid}
+                        onClick={() => handleCollect(debtor.id, debtor.name)}
+                        className="h-8 rounded-full bg-transparent px-4 text-xs disabled:opacity-40"
+                      >
+                        استلام
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader className="text-right">
             <DialogTitle>إضافة دين جديد</DialogTitle>
             <DialogDescription>أدخل بيانات الزبون والمبلغ المستحق.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1.5">
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
               <Label htmlFor="debt-name">اسم الزبون</Label>
-              <Input id="debt-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: حسن علي" />
+              <Input id="debt-name" className={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: حسن علي" />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="debt-phone">رقم الهاتف</Label>
               <Input
                 id="debt-phone"
+                className={`${field} text-right`}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="٠٧٧٠ ١٢٣ ٤٥٦"
                 dir="ltr"
-                className="text-right"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label htmlFor="debt-amount">المبلغ (د.ع)</Label>
                 <Input
                   id="debt-amount"
-                  type="text" inputMode="decimal"
+                  type="text"
+                  inputMode="decimal"
+                  className={`${field} text-right`}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="1000"
                   dir="ltr"
-                  className="text-right"
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label htmlFor="debt-date">تاريخ الاستحقاق</Label>
-                <Input
-                  id="debt-date"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
+                <Input id="debt-date" type="date" className={field} value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setOpen(false)} className="bg-transparent">
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)} className="h-11 rounded-full bg-transparent px-6">
               إلغاء
             </Button>
-            <Button onClick={handleAdd} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button onClick={handleAdd} className="h-11 rounded-full px-6">
               حفظ الدين
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   )
 }
