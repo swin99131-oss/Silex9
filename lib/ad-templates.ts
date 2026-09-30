@@ -34,4 +34,4 @@ export const AD_STATUS: Record<string, { label: string; cls: string }> = {
   finished: { label: "منتهية", cls: "bg-secondary text-muted-foreground" },
 };
 
-export const DELETABLE_STATUSES = ["draft", "pending_payment", "pending_review", "rejected", "finished"];
+export const DELETABLE_STATUSES = ["draft", "pending_payment", "rejected"];
