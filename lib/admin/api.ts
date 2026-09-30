@@ -14,10 +14,22 @@ import type {
 
 export const PAGE_SIZE = 25
 
+export type WithCity<T> = T & { city: string | null }
 export type Page<T> = { rows: T[]; total: number }
 export type ListOpts = { page?: number; search?: string }
 
 const supabase = createClient()
+
+async function attachCity<T extends Record<string, any>>(
+  rows: T[],
+  key: string,
+): Promise<WithCity<T>[]> {
+  const ids = Array.from(new Set(rows.map((r) => r[key]).filter(Boolean))) as string[]
+  if (!ids.length) return rows.map((r) => ({ ...r, city: null }))
+  const { data } = await supabase.from('profiles').select('id, city').in('id', ids)
+  const map = new Map((data ?? []).map((p: any) => [p.id, p.city as string | null]))
+  return rows.map((r) => ({ ...r, city: map.get(r[key]) ?? null }))
+}
 
 async function list<T>(
   table: string,
@@ -34,13 +46,23 @@ async function list<T>(
   return { rows: (data ?? []) as T[], total: count ?? 0 }
 }
 
+async function listWithCity<T extends Record<string, any>>(
+  table: string,
+  ownerKey: string,
+  o: ListOpts = {},
+  build?: (q: any) => any,
+): Promise<Page<WithCity<T>>> {
+  const res = await list<T>(table, o, build)
+  return { rows: await attachCity(res.rows, ownerKey), total: res.total }
+}
+
 const clean = (s: string) => s.replace(/[,()%]/g, ' ').trim()
 
 function profileSearch(q: any, search?: string) {
   const s = search ? clean(search) : ''
   if (!s) return q
   return q.or(
-    `full_name.ilike.%${s}%,display_name.ilike.%${s}%,store_name.ilike.%${s}%,phone.ilike.%${s}%`,
+    `full_name.ilike.%${s}%,display_name.ilike.%${s}%,store_name.ilike.%${s}%,phone.ilike.%${s}%,city.ilike.%${s}%`,
   )
 }
 
@@ -54,19 +76,35 @@ export const listAdmins = (o: ListOpts = {}) =>
   list<Profile>('profiles', o, (q) => q.eq('role', 'admin'))
 
 export const listProducts = (o: ListOpts = {}) =>
-  list<Product>('products', o, (q) => {
+  listWithCity<Product>('products', 'merchant_id', o, (q) => {
     const s = o.search ? clean(o.search) : ''
     return s ? q.ilike('title', `%${s}%`) : q
   })
 
-export const listOrders = (o: ListOpts = {}) => list<Order>('orders', o)
-export const listReports = (o: ListOpts = {}) => list<Report>('reports', o)
+export const listOrders = (o: ListOpts = {}) =>
+  listWithCity<Order>('orders', 'customer_id', o)
+export const listReports = (o: ListOpts = {}) =>
+  listWithCity<Report>('reports', 'reported_id', o)
 export const listConversations = (o: ListOpts = {}) =>
-  list<Conversation>('conversations', o)
+  listWithCity<Conversation>('conversations', 'customer_id', o)
 export const listNotifications = (o: ListOpts = {}) =>
-  list<Notification>('notifications', o)
-export const listCampaigns = (o: ListOpts = {}) => list<Campaign>('campaigns', o)
+  listWithCity<Notification>('notifications', 'user_id', o)
+export const listCampaigns = (o: ListOpts = {}) =>
+  listWithCity<Campaign>('campaigns', 'merchant_id', o)
 export const listAuditLogs = (o: ListOpts = {}) => list<AuditLog>('audit_logs', o)
+
+export async function getCityStats(): Promise<{ city: string; count: number }[]> {
+  const { data, error } = await supabase.from('profiles').select('city')
+  if (error) throw new Error(error.message)
+  const tally = new Map<string, number>()
+  for (const r of data ?? []) {
+    const c = ((r as any).city as string | null)?.trim() || 'غير محدد'
+    tally.set(c, (tally.get(c) ?? 0) + 1)
+  }
+  return Array.from(tally, ([city, count]) => ({ city, count })).sort(
+    (a, b) => b.count - a.count,
+  )
+}
 
 export async function getCounts() {
   const count = async (table: string, build?: (q: any) => any) => {
@@ -135,4 +173,29 @@ export async function setUserRole(userId: string, role: 'admin' | 'merchant' | '
   const { error } = await supabase.from('profiles').update({ role }).eq('id', userId)
   if (error) throw new Error(error.message)
   await logAction('user.role_change', 'profiles', userId, { role })
+}
+
+export const listReportedChats = (o: ListOpts = {}) =>
+  listWithCity<Report>('reports', 'reported_id', o, (q) =>
+    q.not('conversation_id', 'is', null),
+  )
+
+export type ChatMessage = {
+  id: string
+  sender_id: string
+  content: string | null
+  media_type: string | null
+  created_at: string
+  deleted_at: string | null
+}
+
+export async function listMessages(conversationId: string): Promise<ChatMessage[]> {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('id, sender_id, content, media_type, created_at, deleted_at')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true })
+    .limit(200)
+  if (error) throw new Error(error.message)
+  return (data ?? []) as ChatMessage[]
 }

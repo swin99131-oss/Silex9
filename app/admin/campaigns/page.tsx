@@ -3,13 +3,19 @@
 import { useEffect, useState } from 'react'
 import { DataTable } from '@/components/admin/DataTable'
 import { StatusChip } from '@/components/admin/StatusChip'
-import { PAGE_SIZE, listOrders } from '@/lib/admin/api'
+import { PAGE_SIZE, listCampaigns } from '@/lib/admin/api'
 import type { WithCity } from '@/lib/admin/api'
-import type { Order } from '@/lib/admin/types'
+import type { Campaign } from '@/lib/admin/types'
 
-type Row = WithCity<Order>
+type Row = WithCity<Campaign>
 
-export default function OrdersPage() {
+const TYPES: Record<string, string> = {
+  hero: 'بانر رئيسي',
+  slide: 'شريحة مربعة',
+  featured: 'بطاقة مميزة',
+}
+
+export default function CampaignsPage() {
   const [rows, setRows] = useState<Row[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
@@ -18,7 +24,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     setLoading(true)
-    listOrders({ page })
+    listCampaigns({ page })
       .then((res) => {
         setRows(res.rows)
         setTotal(res.total)
@@ -30,7 +36,7 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">الطلبات</h1>
+      <h1 className="text-2xl font-semibold">الإعلانات</h1>
       {error && <p className="rounded-lg bg-red-100 p-3 text-sm text-red-800">{error}</p>}
       <DataTable<Row>
         data={rows}
@@ -40,19 +46,26 @@ export default function OrdersPage() {
         pageSize={PAGE_SIZE}
         onPageChange={setPage}
         columns={[
-          { key: 'customer', header: 'العميل', render: (r) => r.customer_name ?? '—' },
-          { key: 'phone', header: 'الهاتف', render: (r) => r.customer_phone ?? '—' },
-          { key: 'city', header: 'مدينة العميل', render: (r) => r.city ?? '—' },
-          { key: 'items', header: 'المنتجات', render: (r) => r.items_count ?? 0 },
+          { key: 'title', header: 'الإعلان', render: (r) => r.title ?? '—' },
+          { key: 'type', header: 'النوع', render: (r) => (r.type && TYPES[r.type]) || r.type || '—' },
+          { key: 'city', header: 'مدينة التاجر', render: (r) => r.city ?? '—' },
+          { key: 'target', header: 'المحافظة المستهدفة', render: (r) => r.target_province ?? 'الكل' },
           {
-            key: 'total',
-            header: 'المبلغ',
-            render: (r) => (r.total_amount ?? 0).toLocaleString('ar'),
+            key: 'budget',
+            header: 'الميزانية',
+            render: (r) => (r.total_budget ?? 0).toLocaleString('ar'),
           },
+          { key: 'days', header: 'المدة (يوم)', render: (r) => r.duration_days ?? '—' },
           {
             key: 'status',
             header: 'الحالة',
-            render: (r) => <StatusChip>{r.status ?? '—'}</StatusChip>,
+            render: (r) => (
+              <StatusChip
+                status={r.status === 'active' ? 'success' : r.status === 'rejected' ? 'danger' : 'neutral'}
+              >
+                {r.status ?? '—'}
+              </StatusChip>
+            ),
           },
           {
             key: 'created',

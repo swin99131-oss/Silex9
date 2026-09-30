@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { PageLoading } from "@/components/ui/Skeleton";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Settings, Grid3x3, Bookmark, Heart, Share2, User as UserIcon, Search, Plus, Store } from "lucide-react";
+import { Settings, Grid3x3, Bookmark, Heart, Share2, User as UserIcon, Search, Plus, Store, ShieldCheck } from "lucide-react";
 import { useProfile } from "@/lib/useProfile";
 import { supabase } from "@/lib/supabase";
 import { useCart } from "@/lib/cart-context";
@@ -77,6 +77,7 @@ export default function ProfilePage() {
   }
 
   const isMerchant = profile?.role === "merchant";
+  const isAdmin = profile?.role === "admin";
   const displayName = (isMerchant && profile?.store_name) || profile?.full_name || user.email?.split("@")[0] || "مستخدم";
   const tabs = [
     { key: "posts" as const, icon: Grid3x3 },
@@ -139,24 +140,22 @@ export default function ProfilePage() {
       </div>
 
       <div className="px-6 mt-3 md:max-w-md md:mx-auto">
-        {isMerchant ? (
-          <>
-            <Link href="/dashboard" className="flex items-center justify-center gap-2 border border-line rounded-pill py-2.5 text-sm font-semibold">
+        {isAdmin ? (
+          <Link href="/admin" className="flex items-center justify-center gap-2 border border-line rounded-pill py-2.5 text-sm font-semibold">
+            <ShieldCheck size={15} />
+            لوحتي
+          </Link>
+        ) : isMerchant ? (
+          <Link href="/dashboard" className="flex items-center justify-center gap-2 border border-line rounded-pill py-2.5 text-sm font-semibold">
             <Store size={15} />
             لوحتي
           </Link>
-          </>
         ) : (
           <Link href="/profile/merchant-setup" className="flex items-center justify-center gap-2 border border-ink rounded-pill py-2.5 text-sm font-semibold">
             <Store size={15} />
             التبديل إلى حساب تاجر
           </Link>
         )}
-        {/* إعدادات التطبيق */}
-        <Link href="/profile/app-settings" className="flex items-center justify-center gap-2 border border-line rounded-pill py-2.5 text-sm font-semibold">
-          <Settings size={15} />
-          الإعدادات
-        </Link>
       </div>
 
       <div className="mt-5 px-6">

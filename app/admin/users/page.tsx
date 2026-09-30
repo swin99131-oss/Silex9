@@ -70,10 +70,11 @@ export default function UsersPage() {
           setPage(0)
           setSearch(v)
         }}
-        searchPlaceholder="بحث بالاسم أو الهاتف..."
+        searchPlaceholder="بحث بالاسم أو الهاتف أو المدينة..."
         columns={[
           { key: 'name', header: 'الاسم', render: (r) => r.full_name ?? r.display_name ?? '—' },
           { key: 'store', header: 'المتجر', render: (r) => r.store_name ?? '—' },
+          { key: 'city', header: 'المدينة', render: (r) => r.city ?? '—' },
           { key: 'phone', header: 'الهاتف', render: (r) => r.phone ?? r.whatsapp ?? '—' },
           {
             key: 'role',

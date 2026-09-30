@@ -1,4 +1,4 @@
-export type Role = "customer" | "merchant";
+export type Role = "customer" | "merchant" | "admin";
 
 
 export interface Profile {
