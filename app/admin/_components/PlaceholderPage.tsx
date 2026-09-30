@@ -37,7 +37,7 @@ export default function PlaceholderPage({ title, subtitle }: { title: string; su
       const result = await supabase.from(config.table).select(config.columns.join(',')).limit(25)
       if (!mounted) return
       if (result.error) setError(true)
-      else setRows((result.data ?? []) as Record<string, unknown>[])
+      else setRows((result.data ?? []) as unknown as Record<string, unknown>[])
       setLoading(false)
     }
     loadSection()
