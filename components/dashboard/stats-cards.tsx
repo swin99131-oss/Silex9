@@ -1,49 +1,84 @@
 "use client"
 
-import { Wallet, DollarSign, Package, Users } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { useState } from "react"
+import Link from "next/link"
+import { Wallet, DollarSign, Package, Users, type LucideIcon } from "lucide-react"
 import { useStore, formatIQD, toArabicNumber } from "@/components/store/store-context"
 
+type Stat = {
+  title: string
+  value: string
+  subtitle: string
+  icon: LucideIcon
+  iconClass: string
+  href?: string
+}
+
 export function StatsCards() {
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null)
   const { debtors, products, orders, isLoading } = useStore()
-  const totalDebts = debtors.filter((debtor) => !debtor.paid).reduce((sum, debtor) => sum + debtor.amount, 0)
-  const stats = [
-    { title: "مبيعات اليوم", value: "لا توجد بيانات", icon: DollarSign, subtitle: "لا يوجد مصدر مبيعات مرتبط", bgColor: "bg-emerald-50", textColor: "text-emerald-800", iconBg: "bg-emerald-600" },
-    { title: "إجمالي الديون", value: isLoading ? "جار التحميل..." : formatIQD(totalDebts), icon: Wallet, subtitle: `على ${toArabicNumber(debtors.filter((debtor) => !debtor.paid).length)} زبائن`, bgColor: "bg-orange-50", textColor: "text-orange-800", iconBg: "bg-orange-600" },
-    { title: "المنتجات في المخزن", value: isLoading ? "جار التحميل..." : toArabicNumber(products.length), icon: Package, subtitle: `${toArabicNumber(products.filter((product) => product.stock > 0 && product.stock <= 10).length)} قاربت النفاد`, bgColor: "bg-white", textColor: "text-foreground", iconBg: "bg-primary" },
-    { title: "عدد الزبائن", value: orders.length ? "بيانات الطلبات" : "لا توجد بيانات", icon: Users, subtitle: "لا يوجد مصدر زبائن مرتبط", bgColor: "bg-red-50", textColor: "text-red-800", iconBg: "bg-red-600" },
+  const unpaid = debtors.filter((d) => !d.paid)
+  const totalDebts = unpaid.reduce((sum, d) => sum + d.amount, 0)
+  const lowStock = products.filter((p) => p.stock > 0 && p.stock <= 10).length
+  const loading = "جار التحميل..."
+
+  const stats: Stat[] = [
+    {
+      title: "مبيعات اليوم",
+      value: "—",
+      subtitle: "لا يوجد مصدر مبيعات مرتبط",
+      icon: DollarSign,
+      iconClass: "bg-emerald-100 text-emerald-700",
+    },
+    {
+      title: "إجمالي الديون",
+      value: isLoading ? loading : formatIQD(totalDebts),
+      subtitle: `على ${toArabicNumber(unpaid.length)} زبائن`,
+      icon: Wallet,
+      iconClass: "bg-orange-100 text-orange-700",
+      href: "/dashboard/debts",
+    },
+    {
+      title: "المنتجات في المخزن",
+      value: isLoading ? loading : toArabicNumber(products.length),
+      subtitle: `${toArabicNumber(lowStock)} قاربت النفاد`,
+      icon: Package,
+      iconClass: "bg-primary/10 text-primary",
+      href: "/dashboard/inventory",
+    },
+    {
+      title: "عدد الزبائن",
+      value: orders.length ? "بيانات الطلبات" : "—",
+      subtitle: "لا يوجد مصدر زبائن مرتبط",
+      icon: Users,
+      iconClass: "bg-red-100 text-red-700",
+    },
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-      {stats.map((stat, index) => (
-        <Card
-          key={stat.title}
-          onMouseEnter={() => setHoveredCard(index)}
-          onMouseLeave={() => setHoveredCard(null)}
-          style={{ animationDelay: `${index * 100}ms` }}
-          className={`${stat.bgColor} ${stat.textColor} p-4 rounded-2xl border-0 transition-all duration-500 ease-out animate-slide-in-up cursor-pointer ${
-            hoveredCard === index ? "scale-105 shadow-xl" : "shadow-sm"
-          }`}
-        >
-          <div className="flex items-start justify-between mb-3">
-            <h3 className="text-xs font-medium opacity-90">{stat.title}</h3>
-            <div
-              className={`w-8 h-8 rounded-full ${stat.iconBg} flex items-center justify-center transition-transform duration-300 ${
-                hoveredCard === index ? "scale-110" : ""
-              }`}
-            >
-              <stat.icon className="w-4 h-4 text-white" />
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {stats.map((s) => {
+        const body = (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm text-muted">{s.title}</p>
+              <span className={`flex size-9 shrink-0 items-center justify-center rounded-full ${s.iconClass}`}>
+                <s.icon aria-hidden="true" className="size-4" />
+              </span>
             </div>
-          </div>
-          <p className="text-2xl md:text-3xl font-bold mb-2">{stat.value}</p>
-          <div className="flex items-center gap-1.5 text-xs opacity-80">
-            {stat.subtitle && <span>{stat.subtitle}</span>}
-          </div>
-        </Card>
-      ))}
+            <p className="mt-4 text-3xl font-semibold tracking-tight">{s.value}</p>
+            <p className="mt-2 text-xs text-muted">{s.subtitle}</p>
+          </>
+        )
+        const cls = "rounded-xl border border-border bg-card p-5 transition-colors"
+        return s.href ? (
+          <Link key={s.title} href={s.href} className={`${cls} hover:border-foreground/30`}>
+            {body}
+          </Link>
+        ) : (
+          <article key={s.title} className={cls}>
+            {body}
+          </article>
+        )
+      })}
     </div>
   )
 }
