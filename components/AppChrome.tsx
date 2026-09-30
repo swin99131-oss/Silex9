@@ -58,6 +58,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     };
   }, [isAuthPage]);
 
+  if (pathname.startsWith("/admin")) return <>{children}</>;
+
   if (isAuthPage) {
     return <main className="min-h-screen w-full bg-[#ECE9E2]">{children}</main>;
   }
