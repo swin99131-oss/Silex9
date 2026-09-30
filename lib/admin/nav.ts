@@ -1,5 +1,6 @@
 import {
   ClipboardList,
+  CreditCard,
   Flag,
   LayoutDashboard,
   Megaphone,
@@ -22,6 +23,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'الشكاوى والبلاغات', href: '/admin/reports', icon: Flag },
   { label: 'المحادثات', href: '/admin/chats', icon: MessageSquare },
   { label: 'الإعلانات', href: '/admin/campaigns', icon: Megaphone },
+  { label: 'أسعار الإعلانات', href: '/admin/ad-pricing', icon: CreditCard },
   { label: 'المستخدمون', href: '/admin/users', icon: Users },
   { label: 'التجار', href: '/admin/merchants', icon: Store },
   { label: 'المنتجات', href: '/admin/products', icon: Package },
