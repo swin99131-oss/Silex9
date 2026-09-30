@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
+import { supabase } from "@/lib/supabase";
 import { StoriesBar } from "@/components/StoriesBar";
 import { PostCard, type FeedPost } from "@/components/PostCard";
 import { FollowButton } from "@/components/FollowButton";
@@ -19,14 +20,18 @@ export default function HomePage() {
     if (!user) return;
     let alive = true;
     (async () => {
-      const [mine, discover, sug] = await Promise.all([
+      const [mine, discover, sug, hides] = await Promise.all([
         getFollowingFeed(user.id),
         getDiscoverFeed(user.id),
         getSuggestedStores(user.id),
+        supabase.from("post_hides").select("post_id").eq("user_id", user.id),
       ]);
       if (!alive) return;
+      const hidden = new Set(((hides.data ?? []) as { post_id: string }[]).map((r) => r.post_id));
       const seen = new Set(mine.map((p) => p.id));
-      setFeed([...mine, ...discover.filter((p) => !seen.has(p.id))]);
+      setFeed(
+        [...mine, ...discover.filter((p) => !seen.has(p.id))].filter((p) => !hidden.has(p.id))
+      );
       setFollowing(mine.length);
       setStores(sug);
       setReady(true);

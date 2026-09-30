@@ -62,6 +62,18 @@ export default function ReportsPage() {
           { key: 'city', header: 'مدينة المُبلَّغ عنه', render: (r) => r.city ?? '—' },
           { key: 'reason', header: 'السبب', render: (r) => r.reason ?? '—' },
           {
+            key: 'post',
+            header: 'المنشور',
+            render: (r) =>
+              r.post_id ? (
+                <a href={`/post/${r.post_id}`} target="_blank" rel="noreferrer" className="text-sm font-semibold underline">
+                  عرض
+                </a>
+              ) : (
+                '—'
+              ),
+          },
+          {
             key: 'details',
             header: 'التفاصيل',
             render: (r) => (

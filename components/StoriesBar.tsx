@@ -116,10 +116,14 @@ export function StoriesBar() {
                   <button onClick={() => setOpen(uid)} className="block w-full">
                     <div className={`w-[72px] h-[72px] rounded-full mx-auto p-[3px] ${myGroup.seen ? "bg-line" : "bg-ink"}`}>
                       <div
-                        className="w-full h-full rounded-full border-2 border-card flex items-center justify-center text-white text-lg font-display"
+                        className="w-full h-full rounded-full border-2 border-card flex items-center justify-center text-white text-lg font-display overflow-hidden"
                         style={{ background: myGroup.stories[myGroup.stories.length - 1].bg_color }}
                       >
-                        {(myGroup.merchant.full_name ?? myGroup.merchant.username ?? "أنا").charAt(0)}
+                        {myGroup.merchant.avatar_url ? (
+                          <img src={myGroup.merchant.avatar_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          (myGroup.merchant.full_name ?? myGroup.merchant.username ?? "أنا").charAt(0)
+                        )}
                       </div>
                     </div>
                     <p className="text-xs mt-2 truncate">قصتي</p>
@@ -157,8 +161,8 @@ export function StoriesBar() {
                     className="w-full h-full rounded-full border-2 border-card flex items-center justify-center text-white text-lg font-display overflow-hidden"
                     style={{ background: last.bg_color }}
                   >
-                    {last.image_url ? (
-                      <img src={last.image_url} alt="" className="w-full h-full object-cover" />
+                    {g.merchant.avatar_url ? (
+                      <img src={g.merchant.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (
                       label.charAt(0)
                     )}

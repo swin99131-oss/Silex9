@@ -266,8 +266,12 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
         />
 
         <div className="relative z-20 flex items-center gap-3 px-4 pt-8">
-          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-sm font-display shrink-0">
-            {name.charAt(0)}
+          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-sm font-display shrink-0 overflow-hidden">
+            {merchant.avatar_url ? (
+              <img src={merchant.avatar_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              name.charAt(0)
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold truncate">{name}</p>

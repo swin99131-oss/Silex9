@@ -56,6 +56,7 @@ export type Report = {
   reporter_id: string | null
   reported_id: string | null
   conversation_id: string | null
+  post_id: string | null
   reason: string | null
   details: string | null
   created_at: string
