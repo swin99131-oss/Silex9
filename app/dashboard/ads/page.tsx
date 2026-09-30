@@ -27,7 +27,6 @@ import {
   PROVINCES,
   type AdType,
 } from "@/lib/ad-templates"
-
 import { Header } from "@/components/dashboard/header"
 
 type AdCampaign = {
@@ -212,38 +211,45 @@ export default function AdsPage() {
     setCampaigns((prev) => prev.filter((c) => c.id !== id))
   }
 
+  const choice = (active: boolean) =>
+    `rounded-xl border p-4 transition-colors ${
+      active ? "border-primary bg-primary/5" : "border-border hover:bg-chip"
+    }`
+
   return (
-    <>
-<Header title="الإعلانات" description="روّج لمنتجاتك ومتجرك للوصول لزبائن أكثر" />
-        <div className="mt-4 md:mt-5 pb-28 space-y-6 max-w-3xl">
-          <div className="flex items-center justify-end gap-3">
-            {!creating && (
-              <Button onClick={() => setCreating(true)} className="h-9 text-sm">
-                + إعلان جديد
-              </Button>
-            )}
-          </div>
+    <div className="flex flex-col gap-6">
+      <Header
+        title="الإعلانات"
+        description="روّج لمنتجاتك ومتجرك للوصول لزبائن أكثر"
+        search={false}
+        actions={
+          !creating ? (
+            <Button onClick={() => setCreating(true)} className="h-11 rounded-full px-6">
+              + إعلان جديد
+            </Button>
+          ) : undefined
+        }
+      />
 
       {creating && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-5">
-          <div className="space-y-2">
+        <section className="space-y-6 rounded-xl border border-border bg-card p-5">
+          <div className="space-y-3">
             <Label>1. اختر القالب</Label>
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-3">
               {AD_TEMPLATES.map((t) => {
                 const Icon = TEMPLATE_ICON[t.type]
-                const active = tpl === t.type
                 return (
                   <button
                     key={t.type}
                     type="button"
                     onClick={() => setTpl(t.type)}
-                    className={`text-right rounded-xl border p-3 transition-colors ${
-                      active ? "border-primary bg-primary/5" : "border-border hover:bg-secondary"
-                    }`}
+                    className={`text-right ${choice(tpl === t.type)}`}
                   >
-                    <Icon className="w-5 h-5 mb-2 text-foreground" />
+                    <span className="mb-3 flex size-9 items-center justify-center rounded-full bg-chip">
+                      <Icon aria-hidden="true" className="size-4" />
+                    </span>
                     <p className="text-sm font-semibold">{t.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
+                    <p className="mt-1 text-xs text-muted">{t.desc}</p>
                   </button>
                 )
               })}
@@ -251,13 +257,13 @@ export default function AdsPage() {
           </div>
 
           {tpl === "product" && (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label>2. المنتج</Label>
               {products.length === 0 ? (
-                <p className="text-xs text-muted-foreground">لا توجد منتجات لتعزيزها، أضف منتجاً أولاً.</p>
+                <p className="text-xs text-muted">لا توجد منتجات لتعزيزها، أضف منتجاً أولاً.</p>
               ) : (
                 <Select value={productId} onValueChange={setProductId}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="h-11 w-full rounded-xl">
                     <SelectValue placeholder="اختر المنتج" />
                   </SelectTrigger>
                   <SelectContent>
@@ -273,37 +279,38 @@ export default function AdsPage() {
           )}
 
           {tpl === "promotion" && (
-            <div className="space-y-3">
-              <div className="space-y-1.5">
+            <div className="space-y-4">
+              <div className="space-y-2">
                 <Label htmlFor="ad-title">2. عنوان الإعلان</Label>
                 <Input
                   id="ad-title"
+                  className="h-11 rounded-xl"
                   value={title}
                   onChange={(e) => setTitle(e.target.value.slice(0, 60))}
                   placeholder="مثال: خصم 20% على كل المنتجات"
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label htmlFor="ad-desc">نبذة (اختياري)</Label>
                 <textarea
                   id="ad-desc"
                   value={desc}
                   onChange={(e) => setDesc(e.target.value.slice(0, 200))}
                   rows={2}
-                  className="w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="w-full resize-none rounded-xl border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label>صورة البانر</Label>
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="flex h-36 w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border hover:bg-secondary"
+                  className="flex h-40 w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border hover:bg-chip"
                 >
                   {preview ? (
                     <img src={preview} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                    <ImagePlus aria-hidden="true" className="size-8 text-muted" />
                   )}
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pickFile} />
@@ -313,34 +320,29 @@ export default function AdsPage() {
 
           {tpl && (
             <>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label>3. المدة والميزانية</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {AD_PACKAGES.map((p) => {
-                    const active = pkgId === p.id
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setPkgId(p.id)}
-                        className={`rounded-xl border p-3 text-center transition-colors ${
-                          active ? "border-primary bg-primary/5" : "border-border hover:bg-secondary"
-                        }`}
-                      >
-                        <p className="text-sm font-semibold">{p.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{p.days} أيام</p>
-                        <p className="text-[11px] text-muted-foreground">{formatIQD(p.daily)} / يوم</p>
-                      </button>
-                    )
-                  })}
+                <div className="grid grid-cols-3 gap-3">
+                  {AD_PACKAGES.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setPkgId(p.id)}
+                      className={`text-center ${choice(pkgId === p.id)}`}
+                    >
+                      <p className="text-sm font-semibold">{p.label}</p>
+                      <p className="mt-1 text-xs text-muted">{p.days} أيام</p>
+                      <p className="text-[11px] text-muted">{formatIQD(p.daily)} / يوم</p>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label>4. الاستهداف</Label>
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <Select value={province} onValueChange={setProvince}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="h-11 w-full rounded-xl">
                       <SelectValue placeholder="المحافظة" />
                     </SelectTrigger>
                     <SelectContent>
@@ -353,7 +355,7 @@ export default function AdsPage() {
                     </SelectContent>
                   </Select>
                   <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="h-11 w-full rounded-xl">
                       <SelectValue placeholder="التصنيف" />
                     </SelectTrigger>
                     <SelectContent>
@@ -368,51 +370,51 @@ export default function AdsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-xl bg-secondary px-4 py-3 text-sm">
-                <span className="text-muted-foreground">التكلفة الإجمالية</span>
-                <span className="font-bold">{formatIQD(pkg.daily * pkg.days)}</span>
+              <div className="flex items-center justify-between rounded-xl bg-chip px-4 py-3 text-sm">
+                <span className="text-muted">التكلفة الإجمالية</span>
+                <span className="font-semibold">{formatIQD(pkg.daily * pkg.days)}</span>
               </div>
             </>
           )}
 
-          <div className="flex gap-2">
-            <Button onClick={submit} disabled={!tpl || busy} className="flex-1 h-10 text-sm">
+          <div className="flex gap-3">
+            <Button onClick={submit} disabled={!tpl || busy} className="h-11 flex-1 rounded-full">
               {busy ? "جارٍ الإرسال..." : "إرسال للمراجعة"}
             </Button>
-            <Button variant="outline" onClick={resetForm} disabled={busy} className="h-10 text-sm bg-transparent">
+            <Button variant="outline" onClick={resetForm} disabled={busy} className="h-11 rounded-full bg-transparent px-6">
               إلغاء
             </Button>
           </div>
-        </div>
+        </section>
       )}
 
       {fetching ? (
         <div className="space-y-3">
           {[0, 1].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-secondary" />
+            <div key={i} className="h-24 animate-pulse rounded-xl bg-chip" />
           ))}
         </div>
       ) : campaigns.length === 0 && !creating ? (
-        <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted">
           ما عندك إعلانات بعد. اضغط "إعلان جديد" وابدأ.
         </div>
       ) : (
         <div className="space-y-3">
           {campaigns.map((c) => {
-            const st = AD_STATUS[c.status] ?? { label: c.status, cls: "bg-secondary text-muted-foreground" }
+            const st = AD_STATUS[c.status] ?? { label: c.status, cls: "bg-chip text-muted" }
             const catName = cats.find((k) => k.id === c.target_category)?.name
             return (
-              <div key={c.id} className="bg-card border border-border rounded-xl p-4">
+              <article key={c.id} className="rounded-xl border border-border bg-card p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{c.title}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{AD_TYPE_LABEL[c.type] ?? c.type}</p>
+                    <p className="mt-1 text-xs text-muted">{AD_TYPE_LABEL[c.type] ?? c.type}</p>
                   </div>
-                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${st.cls}`}>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-medium ${st.cls}`}>
                     {st.label}
                   </span>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
                   <span>{c.duration_days} أيام</span>
                   <span>{formatIQD(c.total_budget)}</span>
                   <span>{c.target_province ?? "كل العراق"}</span>
@@ -425,34 +427,33 @@ export default function AdsPage() {
                       onClick={() => setDeleteId(c.id)}
                       className="flex items-center gap-1 text-xs text-red-600"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 aria-hidden="true" className="size-3.5" />
                       حذف
                     </button>
                   </div>
                 )}
-              </div>
+              </article>
             )
           })}
         </div>
       )}
 
       <Dialog open={deleteId !== null} onOpenChange={(o) => { if (!o) setDeleteId(null) }}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="rounded-2xl sm:max-w-sm">
           <DialogHeader className="text-right">
             <DialogTitle>حذف الإعلان</DialogTitle>
             <DialogDescription>سيتم حذف هذا الإعلان نهائياً. هل تريد المتابعة؟</DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setDeleteId(null)} className="bg-transparent">
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setDeleteId(null)} className="h-11 rounded-full bg-transparent px-6">
               إلغاء
             </Button>
-            <Button onClick={confirmDelete} className="bg-red-600 text-white hover:bg-red-700">
+            <Button onClick={confirmDelete} className="h-11 rounded-full bg-red-600 px-6 text-white hover:bg-red-700">
               حذف
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-        </div>
-</>
+    </div>
   )
 }

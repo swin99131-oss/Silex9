@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { useStore } from "@/components/store/store-context"
@@ -30,26 +29,10 @@ export function SettingsContent() {
   }, [profile?.id])
 
   const notificationItems = [
-    {
-      key: "debt_notifications" as const,
-      label: "إشعارات الديون المستحقة",
-      description: "تنبيه عند اقتراب موعد استحقاق دين",
-    },
-    {
-      key: "inventory_notifications" as const,
-      label: "تنبيهات نفاد المخزون",
-      description: "تنبيه عند قرب نفاد أحد المنتجات",
-    },
-    {
-      key: "order_notifications" as const,
-      label: "طلبات الزبائن الجديدة",
-      description: "إشعار عند وصول طلب جديد",
-    },
-    {
-      key: "weekly_reports" as const,
-      label: "تقارير المبيعات الأسبوعية",
-      description: "ملخص أسبوعي لأداء المتجر",
-    },
+    { key: "debt_notifications" as const, label: "إشعارات الديون المستحقة", description: "تنبيه عند اقتراب موعد استحقاق دين" },
+    { key: "inventory_notifications" as const, label: "تنبيهات نفاد المخزون", description: "تنبيه عند قرب نفاد أحد المنتجات" },
+    { key: "order_notifications" as const, label: "طلبات الزبائن الجديدة", description: "إشعار عند وصول طلب جديد" },
+    { key: "weekly_reports" as const, label: "تقارير المبيعات الأسبوعية", description: "ملخص أسبوعي لأداء المتجر" },
   ]
 
   async function toggleAssistant(checked: boolean) {
@@ -81,18 +64,26 @@ export function SettingsContent() {
     if (error) {
       toast.error("تعذر حفظ الإعدادات")
     } else {
-      setProfile({ ...profile, assistant_instructions: instructions.trim(), bot_hours_enabled: hoursEnabled, bot_hours_start: hoursStart, bot_hours_end: hoursEnd } as any)
+      setProfile({
+        ...profile,
+        assistant_instructions: instructions.trim(),
+        bot_hours_enabled: hoursEnabled,
+        bot_hours_start: hoursStart,
+        bot_hours_end: hoursEnd,
+      } as any)
       toast.success("تم حفظ إعدادات المساعد")
     }
   }
 
+  const input = "w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm outline-none focus:border-foreground/40"
+
   return (
-    <div className="space-y-6 animate-fade-in max-w-4xl">
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
+    <div className="flex max-w-4xl flex-col gap-6">
+      <section className="rounded-xl border border-border bg-card p-5">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="font-semibold text-lg text-ink">المساعد الذكي</h3>
-            <p className="text-sm text-muted mt-1">
+            <h3 className="text-lg font-semibold">المساعد الذكي</h3>
+            <p className="mt-1 text-sm text-muted">
               يرد تلقائيًا على رسائل الزبائن باسمك، بناءً على منتجاتك الحقيقية وأسلوبك المحدد.
             </p>
           </div>
@@ -100,10 +91,10 @@ export function SettingsContent() {
         </div>
 
         {assistantEnabled && (
-          <div className="space-y-3 pt-4 border-t border-line">
-            <div>
-              <label className="text-sm font-medium text-ink">قواعد وتعليمات إلزامية للبوت (اختياري)</label>
-              <p className="text-xs text-muted mb-2">
+          <div className="mt-5 space-y-5 border-t border-border pt-5">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">قواعد وتعليمات إلزامية للبوت (اختياري)</label>
+              <p className="text-xs text-muted">
                 مثال: رد بأسلوب ودود ومختصر، واذكر إن التوصيل خلال يومين. اتركه فارغًا لأسلوب افتراضي مهني.
               </p>
               <textarea
@@ -112,13 +103,13 @@ export function SettingsContent() {
                 rows={3}
                 maxLength={500}
                 placeholder="اكتب كيف تريد أن يرد المساعد على زبائنك..."
-                className="w-full rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none focus:border-ink"
+                className={input}
               />
             </div>
 
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <label className="text-sm font-medium text-ink">تحديد أوقات عمل المساعد</label>
+                <label className="text-sm font-medium">تحديد أوقات عمل المساعد</label>
                 <p className="text-xs text-muted">إذا كان متوقفًا، يرد المساعد على مدار الساعة.</p>
               </div>
               <Switch checked={hoursEnabled} onCheckedChange={setHoursEnabled} />
@@ -126,28 +117,18 @@ export function SettingsContent() {
 
             {hoursEnabled && (
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-ink block mb-1">من الساعة</label>
-                  <input
-                    type="time"
-                    value={hoursStart}
-                    onChange={(e) => setHoursStart(e.target.value)}
-                    className="w-full rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none focus:border-ink"
-                  />
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium">من الساعة</label>
+                  <input type="time" value={hoursStart} onChange={(e) => setHoursStart(e.target.value)} className={input} />
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-ink block mb-1">إلى الساعة</label>
-                  <input
-                    type="time"
-                    value={hoursEnd}
-                    onChange={(e) => setHoursEnd(e.target.value)}
-                    className="w-full rounded-xl border border-line bg-white px-3 py-2 text-sm outline-none focus:border-ink"
-                  />
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium">إلى الساعة</label>
+                  <input type="time" value={hoursEnd} onChange={(e) => setHoursEnd(e.target.value)} className={input} />
                 </div>
               </div>
             )}
 
-            <Button onClick={saveInstructions} disabled={saving} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button onClick={saveInstructions} disabled={saving} className="h-11 rounded-full px-6">
               {saving ? "جارٍ الحفظ..." : "حفظ الأسلوب"}
             </Button>
             <p className="text-xs text-muted">
@@ -155,29 +136,25 @@ export function SettingsContent() {
             </p>
           </div>
         )}
-      </Card>
+      </section>
 
-      <Card className="p-6">
-        <h3 className="font-semibold text-lg mb-6 text-ink">الإشعارات</h3>
-        <div className="space-y-4">
+      <section className="rounded-xl border border-border bg-card p-5">
+        <h3 className="mb-2 text-lg font-semibold">الإشعارات</h3>
+        <ul className="divide-y divide-border">
           {notificationItems.map((item) => (
-            <div
-              key={item.label}
-              className="flex items-center justify-between py-3 border-b border-line last:border-0"
-            >
+            <li key={item.key} className="flex items-center justify-between gap-4 py-4">
               <div>
-                <p className="font-medium text-ink">{item.label}</p>
-                <p className="text-sm text-muted">{item.description}</p>
+                <p className="text-sm font-medium">{item.label}</p>
+                <p className="mt-0.5 text-xs text-muted">{item.description}</p>
               </div>
               <Switch
                 checked={settings[item.key]}
                 onCheckedChange={(checked) => void updateSetting(item.key, checked)}
-               
               />
-            </div>
+            </li>
           ))}
-        </div>
-      </Card>
+        </ul>
+      </section>
     </div>
   )
 }

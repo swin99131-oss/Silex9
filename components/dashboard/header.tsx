@@ -8,9 +8,10 @@ interface HeaderProps {
   title: string
   description: string
   actions?: ReactNode
+  search?: boolean
 }
 
-export function Header({ title, description, actions }: HeaderProps) {
+export function Header({ title, description, actions, search = true }: HeaderProps) {
   const { query, setQuery } = useStore()
 
   return (
@@ -22,15 +23,17 @@ export function Header({ title, description, actions }: HeaderProps) {
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
-      <div className="relative max-w-md">
-        <Search aria-hidden="true" className="pointer-events-none absolute start-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="ابحث عن منتج أو زبون"
-          className="h-11 w-full rounded-full border border-border bg-card ps-10 pe-4 text-sm"
-        />
-      </div>
+      {search && (
+        <div className="relative max-w-md">
+          <Search aria-hidden="true" className="pointer-events-none absolute start-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ابحث عن منتج أو زبون"
+            className="h-11 w-full rounded-full border border-border bg-card ps-10 pe-4 text-sm"
+          />
+        </div>
+      )}
     </header>
   )
 }
