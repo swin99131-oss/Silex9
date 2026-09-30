@@ -28,7 +28,6 @@ import {
   type AdType,
 } from "@/lib/ad-templates"
 
-import { Sidebar } from "@/components/dashboard/sidebar"
 import { Header } from "@/components/dashboard/header"
 
 type AdCampaign = {
@@ -214,12 +213,8 @@ export default function AdsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
-      <main className="flex-1 p-3 md:p-4 lg:p-5 lg:me-64">
-        <Header title="الإعلانات" description="روّج لمنتجاتك ومتجرك للوصول لزبائن أكثر" />
+    <>
+<Header title="الإعلانات" description="روّج لمنتجاتك ومتجرك للوصول لزبائن أكثر" />
         <div className="mt-4 md:mt-5 pb-28 space-y-6 max-w-3xl">
           <div className="flex items-center justify-end gap-3">
             {!creating && (
@@ -458,7 +453,6 @@ export default function AdsPage() {
         </DialogContent>
       </Dialog>
         </div>
-      </main>
-    </div>
+</>
   )
 }

@@ -3,7 +3,6 @@
 import { useState, type FormEvent } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { Sidebar } from "@/components/dashboard/sidebar"
 import { Header } from "@/components/dashboard/header"
 
 export default function HelpPage() {
@@ -25,12 +24,8 @@ export default function HelpPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
-      <main className="flex-1 p-3 md:p-4 lg:p-5 lg:me-64">
-        <Header title="المساعدة" description="معلومات المنصة وطريقة الإبلاغ عن أي مشكلة." />
+    <>
+<Header title="المساعدة" description="معلومات المنصة وطريقة الإبلاغ عن أي مشكلة." />
         <div className="mt-4 md:mt-5 max-w-5xl mx-auto space-y-6" dir="rtl">
       <div>
         <h1 className="text-2xl font-bold text-foreground">الدعم والتواصل مع الإدارة</h1>
@@ -71,7 +66,6 @@ export default function HelpPage() {
         </form>
       </section>
         </div>
-      </main>
-    </div>
+</>
   )
 }

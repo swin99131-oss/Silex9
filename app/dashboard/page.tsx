@@ -1,4 +1,3 @@
-import { Sidebar } from "@/components/dashboard/sidebar"
 import { Header } from "@/components/dashboard/header"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { ProjectAnalytics } from "@/components/dashboard/project-analytics"
@@ -10,13 +9,8 @@ import { QuickActions } from "@/components/dashboard/quick-actions"
 
 export default function DashboardPage() {
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
-
-      <main className="flex-1 p-3 md:p-4 lg:p-5 lg:me-64">
-        <Header
+    <>
+<Header
           title="لوحة تحكم التاجر"
           description="تابع مبيعاتك وديونك ومخزونك في لمحة واحدة."
           actions={<QuickActions />}
@@ -39,7 +33,6 @@ export default function DashboardPage() {
 
           <RecentOrders />
         </div>
-      </main>
-    </div>
+</>
   )
 }
