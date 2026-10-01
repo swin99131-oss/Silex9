@@ -6,6 +6,59 @@ import { PAGE_SIZE, listAuditLogs } from '@/lib/admin/api'
 import type { AuditLog } from '@/lib/admin/types'
 import { supabase } from '@/lib/supabase'
 
+const ACTIONS: Record<string, string> = {
+  'settings.update': 'تعديل إعدادات المنصة',
+  'user.role_change': 'تغيير صلاحية مستخدم',
+  'user.verify': 'توثيق حساب',
+  'user.unverify': 'إلغاء توثيق حساب',
+  'campaign.active': 'قبول إعلان وتفعيله',
+  'campaign.rejected': 'رفض إعلان',
+  'campaign.paused': 'إيقاف إعلان مؤقتاً',
+  'ad_package.save': 'حفظ باقة إعلانية',
+  'ad_template.save': 'حفظ قالب إعلاني',
+  'ad_settings.save': 'حفظ إعدادات الإعلانات والدفع',
+  'report.resolved': 'إغلاق بلاغ (تمت المعالجة)',
+  'report.dismissed': 'تجاهل بلاغ',
+  'post.delete': 'حذف منشور مبلّغ عنه',
+  'notification.send': 'إرسال تنبيه لمستخدم',
+}
+
+const ENTITIES: Record<string, string> = {
+  platform_settings: 'إعدادات المنصة',
+  profiles: 'حساب مستخدم',
+  campaigns: 'إعلان',
+  ad_packages: 'باقة إعلانية',
+  ad_templates: 'قالب إعلاني',
+  reports: 'بلاغ',
+  posts: 'منشور',
+  notifications: 'تنبيه',
+}
+
+const KEYS: Record<string, string> = {
+  role: 'الصلاحية',
+  daily_price: 'السعر اليومي',
+  days: 'الأيام',
+  active: 'مفعّلة',
+  enabled: 'مفعّل',
+  free_ads_quota: 'عدد الإعلانات المجانية',
+}
+
+const ROLES: Record<string, string> = { admin: 'مشرف', merchant: 'تاجر', customer: 'زبون' }
+
+function fmt(k: string, v: unknown) {
+  if (typeof v === 'boolean') return v ? 'نعم' : 'لا'
+  if (typeof v === 'number') return v.toLocaleString('ar')
+  if (k === 'role' && typeof v === 'string') return ROLES[v] ?? v
+  return String(v)
+}
+
+function describe(d: Record<string, unknown> | null) {
+  const parts = Object.entries(d ?? {})
+    .filter(([k]) => k in KEYS)
+    .map(([k, v]) => `${KEYS[k]}: ${fmt(k, v)}`)
+  return parts.length ? parts.join(' · ') : '—'
+}
+
 export default function AuditLogPage() {
   const [rows, setRows] = useState<AuditLog[]>([])
   const [names, setNames] = useState<Record<string, string>>({})
@@ -51,16 +104,16 @@ export default function AuditLogPage() {
         onPageChange={setPage}
         columns={[
           { key: 'actor', header: 'المنفّذ', render: (r) => (r.actor_id ? names[r.actor_id] ?? '—' : '—') },
-          { key: 'action', header: 'العملية', render: (r) => r.action },
-          { key: 'entity', header: 'الكيان', render: (r) => r.entity_type ?? '—' },
+          {
+            key: 'action',
+            header: 'العملية',
+            render: (r) => <span title={r.action}>{ACTIONS[r.action] ?? 'عملية أخرى'}</span>,
+          },
+          { key: 'entity', header: 'الكيان', render: (r) => (r.entity_type ? ENTITIES[r.entity_type] ?? '—' : '—') },
           {
             key: 'details',
             header: 'التفاصيل',
-            render: (r) => (
-              <span className="line-clamp-2 max-w-xs text-xs" dir="ltr">
-                {Object.keys(r.details ?? {}).length ? JSON.stringify(r.details) : '—'}
-              </span>
-            ),
+            render: (r) => <span className="line-clamp-2 max-w-xs text-xs">{describe(r.details)}</span>,
           },
           { key: 'created', header: 'التاريخ', render: (r) => new Date(r.created_at).toLocaleString('ar') },
         ]}

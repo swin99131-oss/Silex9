@@ -13,6 +13,7 @@ export type Profile = {
   store_name: string | null
   store_category: string | null
   store_bio: string | null
+  verified_at: string | null
   created_at: string
   updated_at: string | null
 }
@@ -59,6 +60,10 @@ export type Report = {
   post_id: string | null
   reason: string | null
   details: string | null
+  status: string
+  admin_note: string | null
+  resolved_by: string | null
+  resolved_at: string | null
   created_at: string
 }
 

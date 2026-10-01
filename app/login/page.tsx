@@ -51,7 +51,7 @@ export default function LoginPage() {
         setErr(
           error.message === "Invalid login credentials"
             ? "البريد الإلكتروني أو كلمة المرور غير صحيحة"
-            : "حدث خطأ أثناء تسجيل الدخول، حاول مجدداً"
+            : `حدث خطأ أثناء تسجيل الدخول: ${error.message} (${error.status ?? "-"})`
         );
       } else if (data?.session) {
         // إدارة خيار تذكر الحساب

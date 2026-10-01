@@ -3,13 +3,32 @@
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Notice } from "@/components/ui/Notice";
 import { PageLoading } from "@/components/ui/Skeleton";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Store } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/lib/useProfile";
 import { getCategories, type Category } from "@/lib/catalog";
+
+const COUNTRY_CODES = "AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW".split(" ");
+
+function countryOptions() {
+  let dn: Intl.DisplayNames | null = null;
+  try {
+    dn = new Intl.DisplayNames(["ar"], { type: "region" });
+  } catch {}
+  const name = (code: string) => {
+    try {
+      return dn?.of(code) ?? code;
+    } catch {
+      return code;
+    }
+  };
+  return COUNTRY_CODES.map((code) => ({ value: code, label: name(code) })).sort((a, b) =>
+    a.label.localeCompare(b.label, "ar")
+  );
+}
 
 export default function MerchantSetupPage() {
   const router = useRouter();
@@ -19,6 +38,9 @@ export default function MerchantSetupPage() {
   const [category, setCategory] = useState("");
   const [storeBio, setStoreBio] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const countries = useMemo(countryOptions, []);
   const [categories, setCategories] = useState<Category[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -33,6 +55,8 @@ export default function MerchantSetupPage() {
     setCategory(profile.store_category ?? "");
     setStoreBio(profile.store_bio ?? "");
     setWhatsapp(profile.whatsapp ?? "");
+    setCountry((profile as any).country ?? "");
+    setCity((profile as any).city ?? "");
   }, [profile]);
 
   if (loading) return <PageLoading />;
@@ -46,13 +70,18 @@ export default function MerchantSetupPage() {
   async function submit() {
     if (!user) return;
     if (!storeName.trim()) return setErr("اسم المتجر مطلوب");
+    if (!category) return setErr("اختر نوع منتجاتك");
+    if (!country) return setErr("اختر دولتك");
+    if (!city.trim()) return setErr("اكتب مدينتك");
     if (!whatsapp.trim()) return setErr("رقم الواتساب مطلوب ليتواصل الزبائن معك");
     setBusy(true);
     setErr("");
     const patch = {
       role: "merchant" as const,
       store_name: storeName.trim(),
-      store_category: category || null,
+      store_category: category,
+      country,
+      city: city.trim(),
       store_bio: storeBio.trim() || null,
       whatsapp: whatsapp.trim(),
     };
@@ -90,8 +119,25 @@ export default function MerchantSetupPage() {
         </div>
 
         <div>
-          <label className="block text-xs font-medium mb-1">تصنيف المتجر</label>
+          <label className="block text-xs font-medium mb-1">نوع منتجاتك</label>
           <Dropdown options={categories.map((c) => ({ value: c.id, label: c.name }))} value={category} onChange={setCategory} placeholder="اختر التصنيف" className={field} />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium mb-1">الدولة</label>
+          <select value={country} onChange={(e) => setCountry(e.target.value)} className={field}>
+            <option value="">اختر الدولة</option>
+            {countries.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium mb-1">المدينة</label>
+          <input value={city} onChange={(e) => setCity(e.target.value)} className={field} />
         </div>
 
         <div>

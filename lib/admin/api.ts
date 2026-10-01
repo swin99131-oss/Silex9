@@ -215,3 +215,58 @@ export async function setCampaignStatus(id: string, status: 'active' | 'rejected
   if (!data?.length) throw new Error('لم يتم التعديل، تحقق من الصلاحيات')
   await logAction('campaign.' + status, 'campaigns', id)
 }
+
+export const listReportsByStatus = (o: ListOpts = {}, status?: string) =>
+  listWithCity<Report>('reports', 'reported_id', o, (q) => (status ? q.eq('status', status) : q))
+
+export async function resolveReport(id: string, status: 'resolved' | 'dismissed', note?: string) {
+  const { data: u } = await supabase.auth.getUser()
+  const { data, error } = await supabase
+    .from('reports')
+    .update({
+      status,
+      admin_note: note?.trim() || null,
+      resolved_by: u.user?.id ?? null,
+      resolved_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select('id')
+  if (error) throw new Error(error.message)
+  if (!data?.length) throw new Error('لم يتم التعديل، تحقق من الصلاحيات')
+  await logAction('report.' + status, 'reports', id)
+}
+
+export async function setMerchantVerified(userId: string, verified: boolean) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ verified_at: verified ? new Date().toISOString() : null })
+    .eq('id', userId)
+    .select('id')
+  if (error) throw new Error(error.message)
+  if (!data?.length) throw new Error('لم يتم التعديل، تحقق من الصلاحيات')
+  await logAction(verified ? 'user.verify' : 'user.unverify', 'profiles', userId)
+}
+
+export async function sendNotification(userId: string, title: string, body: string, type = 'admin') {
+  const { error } = await supabase.from('notifications').insert({ user_id: userId, title, body, type })
+  if (error) throw new Error(error.message)
+  await logAction('notification.send', 'profiles', userId)
+}
+
+export async function deletePostByAdmin(postId: string, reportId: string, ownerId: string | null) {
+  const { data, error } = await supabase.from('posts').delete().eq('id', postId).select('id')
+  if (error) throw new Error(error.message)
+  if (!data?.length) throw new Error('لم يتم الحذف، تحقق من الصلاحيات')
+  await logAction('post.delete', 'posts', postId)
+  await resolveReport(reportId, 'resolved', 'تم حذف المنشور')
+  let notified = false
+  if (ownerId) {
+    try {
+      await sendNotification(ownerId, 'تم حذف منشورك', 'تم حذف أحد منشوراتك لمخالفته سياسة المنصة.')
+      notified = true
+    } catch {
+      notified = false
+    }
+  }
+  return { notified }
+}

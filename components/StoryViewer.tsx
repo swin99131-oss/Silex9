@@ -12,7 +12,10 @@ import { FollowButton } from "./FollowButton";
 
 const DURATION = 5000;
 
-type Viewer = { id: string; full_name: string | null; username: string | null };
+type Viewer = { id: string; full_name: string | null; username: string | null 
+  avatar_url?: string | null;
+  store_name?: string | null;
+};
 
 interface Props {
   merchant: StoryMerchant;
@@ -82,7 +85,7 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
     if (isOwner) {
       supabase
         .from("story_views")
-        .select("viewer:profiles!viewer_id(id, full_name, username)")
+        .select("viewer:profiles!viewer_id(id, full_name, username, avatar_url, store_name)")
         .eq("story_id", sid)
         .order("viewed_at", { ascending: false })
         .then(({ data }) => {
@@ -440,10 +443,24 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
               ) : (
                 <div className="divide-y divide-line">
                   {viewers.map((v) => (
-                    <div key={v.id} className="py-3 text-sm">
-                      <span className="font-semibold">{v.full_name ?? "مستخدم"}</span>
-                      {v.username && <span className="text-muted"> @{v.username}</span>}
-                    </div>
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => router.push(`/u/${v.id}`)}
+                      className="flex w-full items-center gap-3 py-3 text-right text-sm"
+                    >
+                      <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-chip font-display">
+                        {v.avatar_url ? (
+                          <img src={v.avatar_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          (v.store_name ?? v.full_name ?? v.username ?? "؟").charAt(0)
+                        )}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate font-semibold">{v.store_name ?? v.full_name ?? "مستخدم"}</span>
+                        {v.username && <span className="block text-xs text-muted">@{v.username}</span>}
+                      </span>
+                    </button>
                   ))}
                 </div>
               )}

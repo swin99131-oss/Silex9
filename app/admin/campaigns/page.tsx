@@ -187,7 +187,7 @@ export default function CampaignsPage() {
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
                 <span>{r.is_free ? 'مجاني' : fmtIQD(r.price || r.total_budget)}</span>
                 <span>{r.duration_days} أيام</span>
-                <span>{r.target_province ?? 'كل العراق'}</span>
+                <span>{r.target_province ?? 'حسب المتجر'}</span>
                 <span>{new Date(r.created_at).toLocaleDateString('ar')}</span>
               </div>
 

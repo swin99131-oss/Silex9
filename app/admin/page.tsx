@@ -16,7 +16,6 @@ type Stats = {
   products: number
   orders: number
   activeAds: number
-  revenue: number
 }
 
 async function count(table: string, build?: (q: any) => any) {
@@ -46,13 +45,10 @@ export default function AdminHome() {
       count('products'),
       count('orders'),
       count('campaigns', (q) => q.eq('status', 'active')),
-      supabase.from('campaigns').select('price').eq('is_free', false).in('status', ['active', 'paused', 'finished']),
       getCityStats(),
     ])
-      .then(([pendingAds, openReports, unverifiedMerchants, users, newUsers7, merchants, products, orders, activeAds, rev, city]) => {
-        if (rev.error) throw new Error(rev.error.message)
-        const revenue = ((rev.data ?? []) as { price: number | null }[]).reduce((a, r) => a + Number(r.price ?? 0), 0)
-        setS({ pendingAds, openReports, unverifiedMerchants, users, newUsers7, merchants, products, orders, activeAds, revenue })
+      .then(([pendingAds, openReports, unverifiedMerchants, users, newUsers7, merchants, products, orders, activeAds, city]) => {
+        setS({ pendingAds, openReports, unverifiedMerchants, users, newUsers7, merchants, products, orders, activeAds })
         setCities(city)
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'خطأ غير معروف'))
@@ -61,12 +57,12 @@ export default function AdminHome() {
   const attention = [
     { label: 'إعلانات بانتظار المراجعة', value: s?.pendingAds, href: '/admin/campaigns' },
     { label: 'بلاغات مفتوحة', value: s?.openReports, href: '/admin/reports' },
-    { label: 'تجار غير موثّقين', value: s?.unverifiedMerchants, href: '/admin/users' },
+    { label: 'تجار غير موثّقين', value: s?.unverifiedMerchants, href: '/admin/merchants' },
   ]
   const numbers = [
     { label: 'المستخدمون', value: s ? n(s.users) : '…', href: '/admin/users' },
     { label: 'جدد آخر 7 أيام', value: s ? n(s.newUsers7) : '…', href: '/admin/users' },
-    { label: 'التجار', value: s ? n(s.merchants) : '…', href: '/admin/users' },
+    { label: 'التجار', value: s ? n(s.merchants) : '…', href: '/admin/merchants' },
     { label: 'المنتجات', value: s ? n(s.products) : '…', href: '/admin/products' },
     { label: 'الطلبات', value: s ? n(s.orders) : '…', href: '/admin/orders' },
     { label: 'إعلانات نشطة', value: s ? n(s.activeAds) : '…', href: '/admin/campaigns' },
@@ -108,10 +104,6 @@ export default function AdminHome() {
               <p className="mt-1 font-display text-3xl">{c.value}</p>
             </Link>
           ))}
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <p className="text-xs text-muted">إيرادات الإعلانات المعتمدة</p>
-          <p className="mt-1 font-display text-3xl">{s ? `${n(s.revenue)} د.ع` : '…'}</p>
         </div>
       </section>
 

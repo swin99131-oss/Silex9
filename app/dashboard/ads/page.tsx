@@ -99,8 +99,6 @@ export default function AdsPage() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [pkgId, setPkgId] = useState("")
-  const [province, setProvince] = useState("all")
-  const [category, setCategory] = useState("all")
   const [busy, setBusy] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
@@ -171,8 +169,6 @@ export default function AdsPage() {
     setDesc("")
     setFile(null)
     setPreview(null)
-    setProvince("all")
-    setCategory("all")
   }
 
   function closePay() {
@@ -437,39 +433,9 @@ export default function AdsPage() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>4. الاستهداف</Label>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <Select value={province} onValueChange={setProvince}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="المحافظة" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">كل العراق</SelectItem>
-                          {PROVINCES.map((p) => (
-                            <SelectItem key={p} value={p}>
-                              {p}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select value={category} onValueChange={setCategory}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="التصنيف" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">كل التصنيفات</SelectItem>
-                          {cats.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                  <p className="text-xs text-muted">يُحدَّد الجمهور تلقائياً حسب بلد ومدينة ونوع منتجات متجرك.</p>
 
-                  <div className="flex items-center justify-between rounded-xl bg-secondary px-4 py-3 text-sm">
+              <div className="flex items-center justify-between rounded-xl bg-secondary px-4 py-3 text-sm">
                     <span className="text-muted-foreground">التكلفة</span>
                     <span className="font-bold">{willBeFree ? `مجاني (متبقي ${freeLeft})` : formatIQD(total)}</span>
                   </div>
@@ -516,7 +482,7 @@ export default function AdsPage() {
                     <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                       <span>{c.duration_days} أيام</span>
                       <span>{c.is_free ? "مجاني" : formatIQD(c.price || c.total_budget)}</span>
-                      <span>{c.target_province ?? "كل العراق"}</span>
+                      <span>{c.target_province ?? "حسب متجرك"}</span>
                       {catName && <span>{catName}</span>}
                     </div>
                     {c.review_note && (c.status === "rejected" || c.status === "pending_payment") && (

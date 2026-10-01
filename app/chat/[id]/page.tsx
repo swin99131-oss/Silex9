@@ -567,8 +567,8 @@ export default function ChatDetailPage() {
 
       {/* نافذة الإبلاغ */}
       {showReport && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center">
-          <div className="bg-paper w-full md:max-w-sm md:rounded-3xl rounded-t-3xl p-6">
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center">
+          <div className="bg-paper w-full md:max-w-sm md:rounded-3xl rounded-t-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-h-[92dvh] overflow-y-auto">
             <h2 className="font-display text-[17px] mb-4">الإبلاغ عن {partner?.name}</h2>
 
             <div className="flex flex-col gap-2 mb-4">

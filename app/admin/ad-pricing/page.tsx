@@ -66,6 +66,7 @@ export default function AdPricingPage() {
       setError(e instanceof Error ? e.message : 'خطأ غير معروف')
     } finally {
       setBusy('')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
@@ -76,8 +77,8 @@ export default function AdPricingPage() {
 
   function addPkg() {
     setPkgs((a) => [
+      { id: 'pkg_' + Math.random().toString(36).slice(2, 8), label: 'باقة جديدة', days: 7, daily_price: 5000, active: true, sort: a.length + 1 },
       ...a,
-      { id: 'pkg_' + Math.random().toString(36).slice(2, 8), label: '', days: 7, daily_price: 0, active: false, sort: a.length + 1 },
     ])
   }
 

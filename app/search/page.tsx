@@ -127,14 +127,24 @@ export default function SearchPage() {
                   }}
                   className="text-xs text-muted"
                 >
-                  مسح
+                  مسح الكل
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {recent.map((r) => (
-                  <button key={r} onClick={() => setQ(r)} className={chip}>
-                    {r}
-                  </button>
+                  <span key={r} className={`${chip} flex items-center gap-2`}>
+                    <button onClick={() => setQ(r)}>{r}</button>
+                    <button
+                      aria-label="حذف"
+                      onClick={() => {
+                        const next = recent.filter((x) => x !== r);
+                        setRecent(next);
+                        saveRecent(next);
+                      }}
+                    >
+                      <X size={14} className="text-muted" />
+                    </button>
+                  </span>
                 ))}
               </div>
             </div>

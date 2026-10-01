@@ -107,18 +107,32 @@ export function CommentsSheet({
     }
   }
 
-  async function reportComment(commentId: string) {
-    const reason = prompt("ما سبب الإبلاغ؟");
-    if (!reason) return;
-    toast.error("شكراً، تم استقبال إبلاغك");
+  async function reportComment(c: Comment) {
     setShowMenuId(null);
+    if (!viewer) {
+      router.push("/login");
+      return;
+    }
+    const reason = prompt("ما سبب الإبلاغ؟");
+    if (!reason?.trim()) return;
+    const { error } = await supabase.from("reports").insert({
+      reporter_id: viewer.id,
+      reported_id: c.user_id,
+      reason: "تعليق مسيء",
+      details: `${reason.trim()} | نص التعليق: ${c.content.slice(0, 200)} | المنشور: ${postId}`,
+    });
+    if (error) {
+      toast.error("تعذر إرسال البلاغ");
+      return;
+    }
+    toast.success("تم إرسال البلاغ، شكراً لك");
   }
 
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
-        <Drawer.Content className="bg-paper flex flex-col rounded-t-2xl fixed bottom-0 left-0 right-0 max-h-[80vh] z-50 mx-auto max-w-lg">
+        <Drawer.Content className="bg-paper flex flex-col rounded-t-2xl fixed bottom-0 left-0 right-0 max-h-[80vh] z-50 mx-auto max-w-lg md:bottom-auto md:top-[12vh] md:max-h-[76vh] md:rounded-2xl">
           {/* مقبض السحب */}
           <div className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-chip" />
 
@@ -180,7 +194,7 @@ export function CommentsSheet({
                                 </>
                               ) : (
                                 <button
-                                  onClick={() => reportComment(c.id)}
+                                  onClick={() => reportComment(c)}
                                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-amber-600 hover:bg-amber-500/10"
                                 >
                                   <Flag size={12} />
