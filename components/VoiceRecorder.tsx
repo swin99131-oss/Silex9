@@ -39,13 +39,14 @@ export function VoiceRecorder({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      const mr = new MediaRecorder(stream);
+      const mimeType = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"].find((t) => MediaRecorder.isTypeSupported(t));
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       chunksRef.current = [];
       mr.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
       mr.onstop = () => {
-        const b = new Blob(chunksRef.current, { type: "audio/webm" });
+        const b = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
         setBlob(b);
         setPreviewUrl(URL.createObjectURL(b));
         stream.getTracks().forEach((t) => t.stop());

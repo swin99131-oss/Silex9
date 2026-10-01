@@ -184,10 +184,10 @@ export default function ChatDetailPage() {
     setSending(true);
     setShowRecorder(false);
     try {
-      const path = `${convId}/${Date.now()}.webm`;
-      const { error: upErr } = await supabase.storage.from("chat").upload(path, blob, {
-        contentType: "audio/webm",
-      });
+      const mime = (blob.type || "audio/webm").split(";")[0];
+      const ext = mime.includes("mp4") ? "m4a" : mime.includes("ogg") ? "ogg" : "webm";
+      const path = `${convId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("chat").upload(path, blob, { contentType: mime });
       if (upErr) throw upErr;
       await sendMessage(userId, convId, "🎤 رسالة صوتية", path, "audio", replyTo?.id);
       setReplyTo(null);
