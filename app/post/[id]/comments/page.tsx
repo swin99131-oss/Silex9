@@ -1,5 +1,6 @@
 "use client";
 
+import { submitReport } from "@/lib/report";
 import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
@@ -92,7 +93,8 @@ export default function PostCommentsPage() {
   async function reportComment(commentId: string) {
     const reason = prompt("ما سبب الإبلاغ؟");
     if (!reason) return;
-    toast.error("شكراً، تم استقبال إبلاغك");
+    const ok = await submitReport("comment", commentId, reason);
+    if (ok) toast.success("شكراً، وصلنا بلاغك وسنراجعه"); else toast.error("تعذّر إرسال البلاغ");
     setShowMenuId(null);
   }
 

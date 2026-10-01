@@ -1,5 +1,6 @@
 "use client";
 
+import { submitReport } from "@/lib/report";
 import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { CartButton } from "@/components/ui/CartButton";
 import { toast } from "sonner";
@@ -217,7 +218,10 @@ export default function PostDetailPage() {
       router.push("/login");
       return;
     }
-    toast.error("شكراً، تم استقبال إبلاغك");
+    const targetId = window.location.pathname.split("/")[2];
+    if (!targetId) return;
+    const ok = await submitReport("post", targetId, reason);
+    if (ok) toast.success("شكراً، وصلنا بلاغك وسنراجعه"); else toast.error("تعذّر إرسال البلاغ");
   }
 
   function toggleMute() {

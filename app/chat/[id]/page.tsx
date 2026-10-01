@@ -24,6 +24,8 @@ import { getProduct } from "@/lib/catalog";
 
 const REPORT_REASONS = ["محتوى غير لائق", "إزعاج أو تحرش", "احتيال أو نصب", "سبب آخر"];
 
+const QUICK_REPLIES = ["كم السعر؟", "هل متوفر؟", "كم مدة التوصيل؟", "هل يوجد خصم؟"];
+
 export default function ChatDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -32,6 +34,7 @@ export default function ChatDetailPage() {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
+  const [isCustomer, setIsCustomer] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -91,6 +94,7 @@ export default function ChatDetailPage() {
         .maybeSingle();
 
       if (conv && alive) {
+        setIsCustomer((conv as any).customer_id === user.id);
         const other = (conv as any).customer_id === user.id ? (conv as any).merchant : (conv as any).customer;
         if (other) {
           setPartner({ id: other.id, name: other.store_name || other.full_name || other.username || "مستخدم", avatar: other.avatar_url });
@@ -501,6 +505,21 @@ export default function ChatDetailPage() {
             </button>
           </div>
           <p className="text-xs text-muted">جاهز للإرسال</p>
+        </div>
+      )}
+
+      {isCustomer && messages.length === 0 && !text.trim() && !showRecorder && (
+        <div className="flex gap-2 overflow-x-auto bg-paper px-3 pt-2">
+          {QUICK_REPLIES.map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => setText(q)}
+              className="shrink-0 rounded-pill bg-chip px-3 py-1.5 text-xs"
+            >
+              {q}
+            </button>
+          ))}
         </div>
       )}
 
