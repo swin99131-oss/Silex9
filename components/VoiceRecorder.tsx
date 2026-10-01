@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useRef, useState, useEffect } from "react";
 import { Mic, Square, Send, Trash2, Play, Pause } from "lucide-react";
 
@@ -68,7 +69,7 @@ export function VoiceRecorder({
       }, 1000);
     } catch {
       onCancel();
-      alert("يرجى السماح باستخدام الميكروفون");
+      toast.error("يرجى السماح باستخدام الميكروفون");
     }
   }
 

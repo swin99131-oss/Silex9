@@ -217,8 +217,8 @@ export default function AdsPage() {
         p_description: adDesc,
         p_image_url: imageUrl,
         p_target_id: targetId,
-        p_province: province === "all" ? null : province,
-        p_category: category === "all" ? null : category,
+        p_province: null,
+        p_category: null,
       })
       if (error) throw error
       const row = data as { id: string; status: string; price: number }

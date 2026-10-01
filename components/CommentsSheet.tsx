@@ -1,5 +1,6 @@
 "use client";
 
+import { askReportReason } from "@/components/askReportReason";
 import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -113,13 +114,15 @@ export function CommentsSheet({
       router.push("/login");
       return;
     }
-    const reason = prompt("ما سبب الإبلاغ؟");
+    const reason = await askReportReason();
     if (!reason?.trim()) return;
     const { error } = await supabase.from("reports").insert({
       reporter_id: viewer.id,
       reported_id: c.user_id,
-      reason: "تعليق مسيء",
-      details: `${reason.trim()} | نص التعليق: ${c.content.slice(0, 200)} | المنشور: ${postId}`,
+      reason: reason.trim(),
+      target_type: "comment",
+      target_id: c.id,
+      details: `نص التعليق: ${c.content.slice(0, 200)} | المنشور: ${postId}`,
     });
     if (error) {
       toast.error("تعذر إرسال البلاغ");

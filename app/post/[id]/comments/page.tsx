@@ -1,5 +1,6 @@
 "use client";
 
+import { askReportReason } from "@/components/askReportReason";
 import { submitReport } from "@/lib/report";
 import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { toast } from "sonner";
@@ -91,7 +92,7 @@ export default function PostCommentsPage() {
   }
 
   async function reportComment(commentId: string) {
-    const reason = prompt("ما سبب الإبلاغ؟");
+    const reason = await askReportReason();
     if (!reason) return;
     const ok = await submitReport("comment", commentId, reason);
     if (ok) toast.success("شكراً، وصلنا بلاغك وسنراجعه"); else toast.error("تعذّر إرسال البلاغ");

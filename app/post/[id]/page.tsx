@@ -1,5 +1,6 @@
 "use client";
 
+import { askReportReason } from "@/components/askReportReason";
 import { submitReport } from "@/lib/report";
 import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { CartButton } from "@/components/ui/CartButton";
@@ -212,7 +213,7 @@ export default function PostDetailPage() {
   }
 
   async function handleReport() {
-    const reason = prompt("ما سبب الإبلاغ؟");
+    const reason = await askReportReason();
     if (!reason) return;
     if (!viewer) {
       router.push("/login");

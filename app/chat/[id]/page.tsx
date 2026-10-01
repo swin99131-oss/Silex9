@@ -199,7 +199,7 @@ export default function ChatDetailPage() {
       await sendMessage(userId, convId, "🎤 رسالة صوتية", path, "audio", replyTo?.id);
       setReplyTo(null);
     } catch (err: any) {
-      alert(err.message || "تعذّر إرسال الرسالة الصوتية");
+      toast.error(err.message || "تعذّر إرسال الرسالة الصوتية");
     } finally {
       setSending(false);
     }
