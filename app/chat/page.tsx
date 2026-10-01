@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -135,7 +136,10 @@ export default function ChatInboxPage() {
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-1.5 min-w-0">
                     {item.pinned && <Pin size={12} className="text-muted shrink-0" />}
-                    <h3 className="font-semibold text-ink text-sm truncate">{item.partner_name}</h3>
+                    <h3 className="flex min-w-0 items-center gap-1 text-sm font-semibold text-ink">
+                      <span className="truncate">{item.partner_name}</span>
+                      <VerifiedBadge show={item.partner_verified} size={13} />
+                    </h3>
                   </div>
                   {item.last_at && (
                     <span className="text-[11px] text-muted shrink-0">

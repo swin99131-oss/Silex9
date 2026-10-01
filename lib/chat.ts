@@ -12,6 +12,7 @@ partner_name: string;
 partner_username: string | null;
 
 partner_avatar: string | null;
+  partner_verified?: boolean;
 
 partner_role: string;
 
@@ -81,9 +82,9 @@ customer_pinned,
 
 merchant_pinned,
 
-customer:profiles!customer_id(id, full_name, username, avatar_url, role, store_name),
+customer:profiles!customer_id(id, full_name, username, avatar_url, role, store_name, verified_at),
 
-merchant:profiles!merchant_id(id, full_name, username, avatar_url, role, store_name)
+merchant:profiles!merchant_id(id, full_name, username, avatar_url, role, store_name, verified_at)
 
 `
 
@@ -161,6 +162,7 @@ partner_name: partner.store_name || partner.full_name || partner.username || "م
 partner_username: partner.username,
 
 partner_avatar: partner.avatar_url,
+      partner_verified: !!partner.verified_at,
 
 partner_role: partner.role || "customer",
 
