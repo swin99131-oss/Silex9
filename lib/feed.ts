@@ -69,7 +69,7 @@ export async function getSuggestedStores(userId: string): Promise<SuggestedStore
   const followed = new Set((f ?? []).map((r: any) => r.merchant_id));
   const { data } = await supabase
     .from("profiles")
-    .select("id, full_name, username, store_name, avatar_url")
+    .select("id, full_name, username, store_name, verified_at, avatar_url")
     .eq("role", "merchant").neq("id", userId).limit(20);
   return ((data ?? []) as SuggestedStore[]).filter((s) => !followed.has(s.id)).slice(0, 10);
 }

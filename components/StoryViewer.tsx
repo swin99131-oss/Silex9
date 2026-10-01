@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -274,7 +275,7 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate">{name}</p>
+            <p className="text-sm font-semibold truncate">{name}<VerifiedBadge show={verifiedOf(merchant)} size={13} className="mr-1 align-middle" /></p>
             <p className="text-[11px] text-white/70">{timeAgo(story.created_at)}</p>
           </div>
           {!isOwner && <FollowButton merchantId={merchant.id} viewerId={viewerId} size="sm" onDark />}

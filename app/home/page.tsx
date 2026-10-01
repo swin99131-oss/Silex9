@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
@@ -56,7 +57,7 @@ export default function HomePage() {
                     <div className="w-14 h-14 rounded-full bg-chip mx-auto overflow-hidden flex items-center justify-center font-display">
                       {s.avatar_url ? <img src={s.avatar_url} alt="" className="w-full h-full object-cover" /> : name.charAt(0)}
                     </div>
-                    <p className="text-xs font-semibold mt-2 truncate">{name}</p>
+                    <p className="text-xs font-semibold mt-2 truncate">{name}<VerifiedBadge show={verifiedOf(s)} size={13} className="mr-1 align-middle" /></p>
                   </Link>
                   <div className="mt-2 flex justify-center">
                     <FollowButton merchantId={s.id} viewerId={user.id} size="sm" />

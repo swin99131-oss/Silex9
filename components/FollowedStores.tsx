@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/types";
@@ -13,7 +14,7 @@ export function FollowedStores({ userId }: { userId: string }) {
   useEffect(() => {
     supabase
       .from("follows")
-      .select("store:profiles!merchant_id(id, full_name, username, bio, store_name)")
+      .select("store:profiles!merchant_id(id, full_name, username, bio, store_name, verified_at)")
       .eq("follower_id", userId)
       .order("created_at", { ascending: false })
       .then(({ data }) =>
@@ -32,7 +33,10 @@ export function FollowedStores({ userId }: { userId: string }) {
             {(s.store_name ?? s.full_name ?? s.username ?? "؟").charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate">{s.store_name ?? s.full_name ?? s.username}</p>
+            <p className="flex min-w-0 items-center gap-1 text-sm font-semibold">
+              <span className="truncate">{s.store_name ?? s.full_name ?? s.username}</span>
+              <VerifiedBadge show={verifiedOf(s)} size={13} />
+            </p>
             <p className="text-xs text-muted truncate">
               {s.username ? `@${s.username}` : ""}
               {s.bio ? ` ${s.bio}` : ""}

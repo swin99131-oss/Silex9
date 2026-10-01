@@ -53,7 +53,7 @@ type Comment = {
   user_id: string;
   content: string;
   created_at: string;
-  author: { full_name: string | null; username: string | null; avatar_url: string | null } | null;
+  author: { full_name: string | null; username: string | null; avatar_url: string | null; verified_at?: string | null } | null;
 };
 
 export default function PostDetailPage() {
@@ -137,7 +137,7 @@ export default function PostDetailPage() {
       const { data: cmts } = await supabase
         .from("post_comments")
         .select(
-          "id, user_id, content, created_at, author:profiles!user_id(full_name, username, avatar_url)"
+          "id, user_id, content, created_at, author:profiles!user_id(full_name, username, avatar_url, verified_at)"
         )
         .eq("post_id", params.id)
         .order("created_at", { ascending: true });

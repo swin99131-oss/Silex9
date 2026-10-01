@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -12,7 +13,7 @@ type Comment = {
   user_id: string;
   content: string;
   created_at: string;
-  author: { full_name: string | null; username: string | null; avatar_url: string | null } | null;
+  author: { full_name: string | null; username: string | null; avatar_url: string | null; verified_at?: string | null } | null;
 };
 
 export default function PostCommentsPage() {
@@ -28,7 +29,7 @@ export default function PostCommentsPage() {
   useEffect(() => {
     supabase
       .from("post_comments")
-      .select("id, user_id, content, created_at, author:profiles!user_id(full_name, username, avatar_url)")
+      .select("id, user_id, content, created_at, author:profiles!user_id(full_name, username, avatar_url, verified_at)")
       .eq("post_id", params.id)
       .order("created_at", { ascending: true })
       .then(({ data }) => setComments((data as unknown as Comment[]) ?? []));
@@ -44,7 +45,7 @@ export default function PostCommentsPage() {
     const { data, error } = await supabase
       .from("post_comments")
       .insert({ post_id: params.id, user_id: viewer.id, content: t })
-      .select("id, user_id, content, created_at, author:profiles!user_id(full_name, username, avatar_url)")
+      .select("id, user_id, content, created_at, author:profiles!user_id(full_name, username, avatar_url, verified_at)")
       .single();
     if (!error && data) {
       setComments((prev) => [...prev, data as unknown as Comment]);
@@ -128,7 +129,7 @@ export default function PostCommentsPage() {
                       )}
                     </div>
                     <p className="text-xs font-semibold">
-                      {c.author?.full_name ?? c.author?.username ?? "مستخدم"}
+                      {c.author?.full_name ?? c.author?.username ?? "مستخدم"}<VerifiedBadge show={verifiedOf(c.author)} size={12} className="mr-1 align-middle" />
                     </p>
                   </div>
 

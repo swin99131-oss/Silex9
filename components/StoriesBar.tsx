@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
@@ -36,7 +37,7 @@ export function StoriesBar() {
     const [s, v, h, f] = await Promise.all([
       supabase
         .from("stories")
-        .select("*, merchant:profiles!merchant_id(id, full_name, username, avatar_url, whatsapp, store_name)")
+        .select("*, merchant:profiles!merchant_id(id, full_name, username, avatar_url, whatsapp, store_name, verified_at)")
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: true }),
       mine("story_views", "viewer_id"),
@@ -168,7 +169,7 @@ export function StoriesBar() {
                     )}
                   </div>
                 </div>
-                <p className="text-xs mt-2 truncate">{label}</p>
+                <p className="text-xs mt-2 truncate">{label}<VerifiedBadge show={verifiedOf(g.merchant)} size={11} className="mr-1 align-middle" /></p>
               </button>
             );
           })}

@@ -1,5 +1,6 @@
 "use client";
 
+import { ReportPostButton } from "@/components/ReportPostButton";
 import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { CartButton } from "@/components/ui/CartButton";
 import { toast } from "sonner";
@@ -217,6 +218,7 @@ export function PostCard({ post }: { post: FeedPost }) {
             <VerifiedBadge show={verifiedOf(post.author)} size={14} />
           </p>
         </Link>
+        {viewer && !isOwner && <ReportPostButton postId={post.id} reportedId={post.user_id} />}
         {!isOwner && viewer && following !== null && (
           <FollowButton
             merchantId={post.user_id}
