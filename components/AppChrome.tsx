@@ -1,5 +1,6 @@
 "use client";
 
+import { BannedScreen } from "@/components/BannedScreen";
 import { CallProvider } from "@/components/CallProvider";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -26,6 +27,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   const [ready, setReady] = useState(false);
   const [isMerchant, setIsMerchant] = useState(false);
+  const [banned, setBanned] = useState<{ reason: string | null } | null>(null);
 
   useEffect(() => {
     if (isAuthPage) {
@@ -50,8 +52,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(async ({ data }) => {
       const uid = data.session?.user.id;
       if (!uid) return;
-      const { data: p } = await supabase.from("profiles").select("role").eq("id", uid).maybeSingle();
+      const { data: p } = await supabase.from("profiles").select("role, banned_at, ban_reason").eq("id", uid).maybeSingle();
       if (alive) setIsMerchant(p?.role === "merchant");
+      if (alive) setBanned(p?.banned_at ? { reason: p.ban_reason ?? null } : null);
     });
     return () => {
       alive = false;
@@ -65,6 +68,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   }
 
   if (!ready) return <PageSkeleton />;
+
+  if (banned) return <BannedScreen reason={banned.reason} />;
 
   const navItems = isMerchant
     ? [
