@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { toast } from "sonner";
 import { PageLoading } from "@/components/ui/Skeleton";
 import { useEffect, useState } from "react";
@@ -134,7 +135,10 @@ export default function UserProfilePage() {
             <UserIcon size={36} className="text-ink/40" />
           )}
         </div>
-        <h1 className="font-display text-[20px] mt-3">{displayName}</h1>
+        <h1 className="font-display text-[20px] mt-3">
+          {displayName}
+          <VerifiedBadge show={verifiedOf(profile)} size={18} className="mr-1 align-middle" />
+        </h1>
         {profile.username && <p className="text-xs text-muted mt-0.5">@{profile.username}</p>}
         {profile.bio && (
           <p className="text-sm text-ink/70 mt-2 max-w-xs leading-relaxed">{profile.bio}</p>

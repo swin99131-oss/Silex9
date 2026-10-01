@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { CartButton } from "@/components/ui/CartButton";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
@@ -211,7 +212,10 @@ export function PostCard({ post }: { post: FeedPost }) {
               <UserIcon size={14} className="text-ink/40" />
             )}
           </div>
-          <p className="text-sm font-semibold truncate">{authorName}</p>
+          <p className="flex min-w-0 items-center gap-1 text-sm font-semibold">
+            <span className="truncate">{authorName}</span>
+            <VerifiedBadge show={verifiedOf(post.author)} size={14} />
+          </p>
         </Link>
         {!isOwner && viewer && following !== null && (
           <FollowButton

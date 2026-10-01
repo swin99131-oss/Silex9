@@ -1,5 +1,10 @@
 import { BadgeCheck } from "lucide-react";
 
+export function verifiedOf(x: unknown): string | null {
+  const v = (x as { verified_at?: string | null } | null | undefined)?.verified_at;
+  return v ?? null;
+}
+
 export function VerifiedBadge({
   show,
   size = 14,

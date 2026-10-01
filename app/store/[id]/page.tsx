@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { MessageCircle } from "lucide-react";
@@ -40,7 +41,7 @@ export default function StorePage() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, full_name, username, bio, avatar_url, whatsapp, store_name, store_category, store_bio")
+        .select("id, full_name, username, bio, avatar_url, whatsapp, store_name, store_category, store_bio, verified_at")
         .eq("id", params.id)
         .eq("role", "merchant")
         .maybeSingle();
@@ -108,7 +109,7 @@ export default function StorePage() {
           </span>
         </button>
         <div className="min-w-0">
-          <h1 className="font-display text-[20px] md:text-[24px] truncate">{name}</h1>
+          <h1 className="font-display text-[20px] md:text-[24px] truncate">{name}<VerifiedBadge show={verifiedOf(store)} size={18} className="mr-1 align-middle" /></h1>
           {store.username && <p className="text-sm text-muted truncate">@{store.username}</p>}
           <p className="text-xs text-muted mt-0.5">
             {products.length} منتج{followers !== null ? ` · ${followers} متابع` : ""}

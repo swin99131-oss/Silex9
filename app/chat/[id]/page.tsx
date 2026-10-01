@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { toast } from "sonner";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -40,6 +41,7 @@ export default function ChatDetailPage() {
   const [showRecorder, setShowRecorder] = useState(false);
   const [attachStory, setAttachStory] = useState<{ id: string; text: string; bg: string; image: string | null } | null>(null);
   const [attachProduct, setAttachProduct] = useState<{ id: string; name: string; price: number; image: string } | null>(null);
+  const [partnerVerified, setPartnerVerified] = useState(false);
   const [partner, setPartner] = useState<{ id: string; name: string; avatar: string | null } | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -84,7 +86,7 @@ export default function ChatDetailPage() {
 
       const { data: conv } = await supabase
         .from("conversations")
-        .select("customer_id, merchant_id, customer:profiles!customer_id(id, full_name, username, avatar_url, store_name), merchant:profiles!merchant_id(id, full_name, username, avatar_url, store_name)")
+        .select("customer_id, merchant_id, customer:profiles!customer_id(id, full_name, username, avatar_url, store_name, verified_at), merchant:profiles!merchant_id(id, full_name, username, avatar_url, store_name, verified_at)")
         .eq("id", convId)
         .maybeSingle();
 
@@ -92,6 +94,7 @@ export default function ChatDetailPage() {
         const other = (conv as any).customer_id === user.id ? (conv as any).merchant : (conv as any).customer;
         if (other) {
           setPartner({ id: other.id, name: other.store_name || other.full_name || other.username || "مستخدم", avatar: other.avatar_url });
+          setPartnerVerified(!!other.verified_at);
         }
       }
 
@@ -264,6 +267,7 @@ export default function ChatDetailPage() {
                 )}
               </div>
               <span className="font-semibold text-sm truncate">{partner.name}</span>
+              <VerifiedBadge show={partnerVerified} size={14} />
             </Link>
           )}
         </div>

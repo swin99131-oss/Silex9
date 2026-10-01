@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import type { FeedPost } from "@/components/PostCard";
 
 const COLS =
-  "id, user_id, title, caption, hashtags, image_url, media_type, product_id, created_at, author:profiles!user_id(full_name, username, avatar_url, store_name)";
+  "id, user_id, title, caption, hashtags, image_url, media_type, product_id, created_at, author:profiles!user_id(full_name, username, avatar_url, store_name, verified_at)";
 
 async function enrich(rows: any[], userId: string): Promise<FeedPost[]> {
   if (!rows.length) return [];

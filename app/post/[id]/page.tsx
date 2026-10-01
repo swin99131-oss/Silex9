@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { CartButton } from "@/components/ui/CartButton";
 import { toast } from "sonner";
 import { PageLoading } from "@/components/ui/Skeleton";
@@ -102,7 +103,7 @@ export default function PostDetailPage() {
       const { data } = await supabase
         .from("posts")
         .select(
-          "id, user_id, title, caption, hashtags, image_url, media_type, product_id, created_at, author:profiles!user_id(full_name, username, avatar_url)"
+          "id, user_id, title, caption, hashtags, image_url, media_type, product_id, created_at, author:profiles!user_id(full_name, username, avatar_url, verified_at)"
         )
         .eq("id", params.id)
         .maybeSingle();
@@ -255,7 +256,10 @@ export default function PostDetailPage() {
                   <UserIcon size={14} className="text-ink/40" />
                 )}
               </div>
-              <p className="text-sm font-semibold">{authorName}</p>
+              <p className="flex items-center gap-1 text-sm font-semibold">
+                  {authorName}
+                  <VerifiedBadge show={verifiedOf(post.author)} size={14} />
+                </p>
             </Link>
           </div>
 
