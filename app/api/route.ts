@@ -4,13 +4,29 @@ import { createClient } from "@supabase/supabase-js"
 const defaultModel = "gemini-2.0-flash"
 
 function admin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  )
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  return createClient(url, key)
 }
 
 export async function POST(request: Request) {
+  const auth = request.headers.get("authorization") ?? ""
+  if (!auth.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+  }
+
+  const supabase = admin()
+  if (!supabase) {
+    return NextResponse.json({ error: "backend_not_configured" }, { status: 503 })
+  }
+
+  const { data: userData } = await supabase.auth.getUser(auth.slice(7))
+  const caller = userData.user
+  if (!caller) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+  }
+
   let body: { conversationId?: string; customerMessage?: string }
   try {
     body = await request.json()
@@ -23,8 +39,9 @@ export async function POST(request: Request) {
   if (!conversationId || !customerMessage) {
     return NextResponse.json({ error: "بيانات ناقصة" }, { status: 400 })
   }
-
-  const supabase = admin()
+  if (customerMessage.length > 1000) {
+    return NextResponse.json({ error: "الرسالة طويلة جداً" }, { status: 400 })
+  }
 
   const { data: conv } = await supabase
     .from("conversations")
@@ -33,6 +50,12 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (!conv) return NextResponse.json({ skipped: true, reason: "conversation not found" })
+
+  // يجب أن يكون المتصل طرفاً فعلياً في هذه المحادثة بالذات
+  if (caller.id !== conv.customer_id && caller.id !== conv.merchant_id) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 })
+  }
+
   if (conv.ai_muted) return NextResponse.json({ skipped: true, reason: "ai muted for this conversation" })
 
   const { data: merchant } = await supabase
@@ -45,7 +68,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ skipped: true, reason: "assistant disabled" })
   }
 
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
     return NextResponse.json({ error: "لم يتم إعداد مفتاح الذكاء الاصطناعي" }, { status: 503 })
   }
@@ -79,7 +102,7 @@ export async function POST(request: Request) {
     "",
     "قواعد صارمة يجب الالتزام بها:",
     "- لا تخترع أي منتج أو سعر أو معلومة غير موجودة أعلاه.",
-    "- إذا سأل الزبون عن شيء غير موجود بالقائمة، أخبره بأمانة أنه غير متوفر حاليًا.",
+    "- إذا سأل الزبون عن شيء غير موجود بالقائمة، أخبره بأمانة أنه غيرمتوفر حاليًا.",
     "- إذا كان السؤال يحتاج قرار التاجر نفسه (مثل تفاوض على السعر أو شكوى)، اطلب من الزبون الانتظار قليلًا لرد التاجر مباشرة.",
     "- اكتب بالعربية البسيطة المفهومة، بدون أخطاء إملائية، وبإيجاز (لا تطل).",
   ].join("\n")

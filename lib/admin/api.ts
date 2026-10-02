@@ -150,6 +150,14 @@ export async function getSettings(): Promise<Record<PlatformSettingKey, string>>
     support_whatsapp: '',
     terms_text: '',
     privacy_text: '',
+    payments_enabled: 'false',
+    payment_provider: 'disabled',
+    payment_merchant_id: '',
+    payment_api_key: '',
+    payment_currency: 'USD',
+    payment_exchange_rate: '1',
+    payment_webhook_url: '',
+    payment_status: 'off',
   } as Record<PlatformSettingKey, string>
   for (const r of (data ?? []) as PlatformSetting[]) out[r.key] = r.value
   return out

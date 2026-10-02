@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  return createClient(url, key)
+}
 
 function isWithinBotHours(start: string, end: string): boolean {
   const now = new Date()
@@ -19,9 +21,28 @@ function isWithinBotHours(start: string, end: string): boolean {
 
 export async function POST(req: NextRequest) {
   try {
-    const { conversationId, customerMessage, senderId, recipientId } = await req.json()
+    const auth = req.headers.get("authorization") ?? ""
+    if (!auth.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+    }
+
+    const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: "backend_not_configured" }, { status: 503 })
+    }
+
+    const { data: userData } = await supabaseAdmin.auth.getUser(auth.slice(7))
+    const caller = userData.user
+    if (!caller) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+    }
+
+    const { conversationId, customerMessage, recipientId } = await req.json()
     if (!conversationId || !customerMessage) {
       return NextResponse.json({ error: "بيانات ناقصة" }, { status: 400 })
+    }
+    if (String(customerMessage).length > 1000) {
+      return NextResponse.json({ error: "الرسالة طويلة جداً" }, { status: 400 })
     }
 
     const { data: conv } = await supabaseAdmin
@@ -31,10 +52,16 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     if (!conv) return NextResponse.json({ error: "المحادثة غير موجودة" }, { status: 404 })
+
+    // المتصل نفسه (حسب التوكن) يجب أن يكون طرفاً فعلياً في المحادثة
+    if (caller.id !== conv.customer_id && caller.id !== conv.merchant_id) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 })
+    }
+
+    const senderId = caller.id
     if (
       !recipientId ||
       (recipientId !== conv.customer_id && recipientId !== conv.merchant_id) ||
-      (senderId !== conv.customer_id && senderId !== conv.merchant_id) ||
       senderId === recipientId
     ) {
       return NextResponse.json({ error: "أطراف المحادثة غير صحيحة" }, { status: 400 })
@@ -77,8 +104,13 @@ ${JSON.stringify(products ?? [])}
 - لا تكتب أكواد برمجية ولا تخرج عن نطاق خدمة هذا المتجر.
 - اجعل ردودك مختصرة ومباشرة.`
 
+    const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
+    if (!geminiApiKey) {
+      return NextResponse.json({ error: "ai_key_missing" }, { status: 503 })
+    }
+
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(geminiApiKey)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

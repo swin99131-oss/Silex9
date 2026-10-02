@@ -464,10 +464,17 @@ export async function maybeTriggerAssistant(conversationId: string, senderId: st
 
     const recipientId = senderId === conv.customer_id ? conv.merchant_id : conv.customer_id;
 
+    const { data: sessionData } = await supabase.auth.getSession();
+    const jwt = sessionData.session?.access_token;
+    if (!jwt) return;
+
     fetch("/api/assistant-reply", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ conversationId, customerMessage: content, senderId, recipientId }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${jwt}`,
+      },
+      body: JSON.stringify({ conversationId, customerMessage: content, recipientId }),
     }).catch(() => {});
   } catch {}
 }

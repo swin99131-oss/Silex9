@@ -51,6 +51,8 @@ export default function LoginPage() {
         setErr(
           error.message === "Invalid login credentials"
             ? "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+            : error.message === "Email not confirmed"
+            ? "لم يتم تفعيل بريدك بعد. تحقق من بريدك الإلكتروني واضغط على رابط التفعيل."
             : `حدث خطأ أثناء تسجيل الدخول: ${error.message} (${error.status ?? "-"})`
         );
       } else if (data?.session) {
@@ -78,7 +80,7 @@ export default function LoginPage() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/home`,
       },
     });
   };

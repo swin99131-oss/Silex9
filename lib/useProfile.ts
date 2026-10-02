@@ -4,97 +4,57 @@ import { supabase } from "./supabase";
 
 import type { Profile } from "./types";
 
+async function loadOrCreateProfile(userId: string, meta: Record<string, any>) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (data) return data as Profile;
+
+  // أول جلسة حقيقية لهذا المستخدم (بعد تأكيد البريد أو عبر جوجل) ولا يوجد له صف بعد
+  const fullName = meta?.full_name || meta?.name || null;
+  const avatarUrl = meta?.avatar_url || meta?.picture || null;
+
+  const { data: created } = await supabase
+    .from("profiles")
+    .upsert({ id: userId, full_name: fullName, avatar_url: avatarUrl })
+    .select("*")
+    .maybeSingle();
+
+  return (created as Profile) ?? null;
+}
 
 export function useProfile() {
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-const [user, setUser] = useState<any>(null);
+  useEffect(() => {
+    async function sync(currentUser: any) {
+      setUser(currentUser);
+      if (currentUser) {
+        const p = await loadOrCreateProfile(currentUser.id, currentUser.user_metadata ?? {});
+        setProfile(p);
+      } else {
+        setProfile(null);
+      }
+      setLoading(false);
+    }
 
-const [profile, setProfile] = useState<Profile | null>(null);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      sync(session?.user ?? null);
+    });
 
-const [loading, setLoading] = useState(true);
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      sync(session?.user ?? null);
+    });
 
+    return () => {
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
-
-
-useEffect(() => {
-
-async function loadData() {
-
-const { data: { session } } = await supabase.auth.getSession();
-
-const currentUser = session?.user ?? null;
-
-setUser(currentUser);
-
-
-if (currentUser) {
-
-const { data } = await supabase
-
-.from("profiles")
-
-.select("*")
-
-.eq("id", currentUser.id)
-
-.single();
-
-setProfile(data as Profile);
-
-} else {
-
-setProfile(null);
-
-}
-
-setLoading(false);
-
-}
-
-
-loadData();
-
-
-const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-
-const currentUser = session?.user ?? null;
-
-setUser(currentUser);
-
-if (currentUser) {
-
-const { data } = await supabase
-
-.from("profiles")
-
-.select("*")
-
-.eq("id", currentUser.id)
-
-.single();
-
-setProfile(data as Profile);
-
-} else {
-
-setProfile(null);
-
-}
-
-setLoading(false);
-
-});
-
-
-return () => {
-
-sub.subscription.unsubscribe();
-
-};
-
-}, []);
-
-
-return { user, profile, setProfile, loading };
-
+  return { user, profile, setProfile, loading };
 }

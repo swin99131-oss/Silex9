@@ -49,6 +49,7 @@ export default function RegisterPage() {
         password,
         options: {
           data: { full_name: fullName.trim() },
+          emailRedirectTo: `${window.location.origin}/home`,
         },
       });
 
@@ -61,20 +62,10 @@ export default function RegisterPage() {
         return;
       }
 
-      if (data.user) {
-        // إنشاء صف بجدول profiles للمستخدم الجديد
-        await supabase.from("profiles").upsert({
-          id: data.user.id,
-          full_name: fullName.trim(),
-        });
-      }
-
       if (data.session) {
         router.push("/home");
       } else {
-        setErr("");
-        toast.success("تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتفعيله إن لزم.");
-        router.push("/login");
+        router.push("/register/check-email");
       }
     } catch (error) {
       setErr("حدث خطأ غير متوقع");

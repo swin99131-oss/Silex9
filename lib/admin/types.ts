@@ -118,6 +118,14 @@ export type PlatformSettingKey =
   | 'support_whatsapp'
   | 'terms_text'
   | 'privacy_text'
+  | 'payments_enabled'
+  | 'payment_provider'
+  | 'payment_merchant_id'
+  | 'payment_api_key'
+  | 'payment_currency'
+  | 'payment_exchange_rate'
+  | 'payment_webhook_url'
+  | 'payment_status'
 
 export type PlatformSetting = {
   key: PlatformSettingKey
