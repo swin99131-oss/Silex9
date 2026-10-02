@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppToaster } from "@/components/ui/AppToaster";
 import { AppChrome } from "@/components/AppChrome";
+import { OneSignalProvider } from "@/components/OneSignalProvider";
 import { CartProvider } from "@/lib/cart-context";
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="ar" dir="rtl">
       <body className="min-h-screen bg-paper text-ink antialiased">
         <AppToaster />
+        <OneSignalProvider />
         <CartProvider>
           <AppChrome>{children}</AppChrome>
         </CartProvider>

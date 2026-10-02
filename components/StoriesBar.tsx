@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/lib/useProfile";
-import type { Story, StoryMerchant } from "@/lib/types";
+import { parseStoryAppearance, type Story, type StoryMerchant } from "@/lib/types";
 import { StoryViewer } from "./StoryViewer";
 import { StoryCamera, type CapturedMedia } from "./StoryCamera";
 import { StoryEditor } from "./StoryEditor";
@@ -118,7 +118,7 @@ export function StoriesBar() {
                     <div className={`w-[72px] h-[72px] rounded-full mx-auto p-[3px] ${myGroup.seen ? "bg-line" : "bg-ink"}`}>
                       <div
                         className="w-full h-full rounded-full border-2 border-card flex items-center justify-center text-white text-lg font-display overflow-hidden"
-                        style={{ background: myGroup.stories[myGroup.stories.length - 1].bg_color }}
+                        style={{ background: parseStoryAppearance(myGroup.stories[myGroup.stories.length - 1].bg_color).background }}
                       >
                         {myGroup.merchant.avatar_url ? (
                           <img src={myGroup.merchant.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -160,7 +160,7 @@ export function StoriesBar() {
                 <div className={`w-[72px] h-[72px] rounded-full mx-auto p-[3px] ${g.seen ? "bg-line" : "bg-ink"}`}>
                   <div
                     className="w-full h-full rounded-full border-2 border-card flex items-center justify-center text-white text-lg font-display overflow-hidden"
-                    style={{ background: last.bg_color }}
+                    style={{ background: parseStoryAppearance(last.bg_color).background }}
                   >
                     {g.merchant.avatar_url ? (
                       <img src={g.merchant.avatar_url} alt="" className="w-full h-full object-cover" />

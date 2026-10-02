@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Loader2, Tag, Check, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { STORY_COLORS, type Profile } from "@/lib/types";
+import {
+  encodeStoryAppearance,
+  STORY_COLORS,
+  STORY_TEXT_COLORS,
+  type Profile,
+  type StoryTextStyle,
+} from "@/lib/types";
 import type { CapturedMedia } from "./StoryCamera";
 
 export function StoryEditor({
@@ -17,12 +23,15 @@ export function StoryEditor({
   profile: Profile;
   products: { id: string; title: string }[];
   initialMedia: CapturedMedia | null;
-  onClose: () => void;
   onBack: () => void;
+  onClose: () => void;
   onPublished: (newStoryId: string) => void;
 }) {
   const [text, setText] = useState("");
   const [color, setColor] = useState(STORY_COLORS[0]);
+  const [textColor, setTextColor] = useState(STORY_TEXT_COLORS[0]);
+  const [textStyle, setTextStyle] = useState<StoryTextStyle>("classic");
+  const [textSize, setTextSize] = useState(28);
   const [productId, setProductId] = useState("");
   const [showColors, setShowColors] = useState(false);
   const [showProducts, setShowProducts] = useState(false);
@@ -35,10 +44,10 @@ export function StoryEditor({
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  const MAX_CHARS = 40;
 
   const hasMedia = !!initialMedia;
   const isVideo = initialMedia?.type === "video";
-  const MAX_CHARS = 100;
 
   useEffect(() => {
     return () => {
@@ -47,7 +56,6 @@ export function StoryEditor({
   }, [initialMedia]);
 
   function startDrag(e: React.PointerEvent) {
-    e.stopPropagation();
     dragging.current = true;
   }
   function endDrag() {
@@ -106,7 +114,7 @@ export function StoryEditor({
       .insert({
         merchant_id: profile.id,
         text: t,
-        bg_color: color,
+        bg_color: encodeStoryAppearance({ background: color, textColor, textStyle, textSize, ...textPos }),
         image_url: imageUrl,
         video_url: videoUrl,
         media_type: mediaType,
@@ -168,8 +176,13 @@ export function StoryEditor({
               rows={2}
               dir="auto"
               onPointerDown={(e) => e.stopPropagation()}
-              className="w-full bg-transparent text-center text-white text-[21px] font-bold leading-normal outline-none resize-none placeholder:text-white/50"
-              style={{ textShadow: hasMedia ? "0 1px 8px rgba(0,0,0,0.6)" : "none" }}
+              className={`w-full resize-none text-center leading-normal outline-none ${textStyle === "strong" ? "font-black" : "font-semibold"} ${textStyle === "label" ? "rounded-xl px-3 py-2" : "bg-transparent"} placeholder:text-white/50`}
+              style={{
+                color: textColor,
+                fontSize: textSize,
+                background: textStyle === "label" ? "rgba(0,0,0,0.48)" : undefined,
+                textShadow: hasMedia && textStyle !== "label" ? "0 1px 8px rgba(0,0,0,0.65)" : "none",
+              }}
             />
           </div>
         </div>
@@ -265,6 +278,42 @@ export function StoryEditor({
 
         <div className="relative z-10 self-center -mt-1 px-3 py-1 rounded-full bg-black/35 text-white text-[10px]" dir="ltr">
           {text.length}/{MAX_CHARS}
+        </div>
+
+        <div className="relative z-10 mx-auto flex items-center gap-2 rounded-full bg-black/45 px-3 py-2">
+          {STORY_TEXT_COLORS.map((c) => (
+            <button
+              key={c}
+              onClick={() => setTextColor(c)}
+              aria-label={`لون النص ${c}`}
+              className="size-6 rounded-full border border-white/70"
+              style={{ background: c, boxShadow: textColor === c ? "0 0 0 2px #111, 0 0 0 3px #fff" : "none" }}
+            />
+          ))}
+          <span className="mx-1 h-5 w-px bg-white/30" />
+          {([
+            ["classic", "عادي"],
+            ["strong", "عريض"],
+            ["label", "خلفية"],
+          ] as [StoryTextStyle, string][]).map(([style, label]) => (
+            <button
+              key={style}
+              onClick={() => setTextStyle(style)}
+              aria-pressed={textStyle === style}
+              className={`rounded-full px-2.5 py-1 text-[10px] ${textStyle === style ? "bg-white text-black" : "text-white"}`}
+            >
+              {label}
+            </button>
+          ))}
+          <input
+            type="range"
+            min={18}
+            max={42}
+            value={textSize}
+            aria-label="حجم النص"
+            onChange={(e) => setTextSize(Number(e.target.value))}
+            className="w-14 accent-white"
+          />
         </div>
 
         <div className="flex-1" />

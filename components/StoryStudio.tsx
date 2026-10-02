@@ -5,7 +5,16 @@ import { Dropdown } from "@/components/ui/Dropdown";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Eye, Trash2, ImagePlus, X, Type } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { STORY_COLORS, type Profile, type Story, type StoryMerchant } from "@/lib/types";
+import {
+  encodeStoryAppearance,
+  parseStoryAppearance,
+  STORY_COLORS,
+  STORY_TEXT_COLORS,
+  type Profile,
+  type Story,
+  type StoryMerchant,
+  type StoryTextStyle,
+} from "@/lib/types";
 import { StoryViewer } from "./StoryViewer";
 
 type Row = Story & { story_views: { count: number }[] };
@@ -14,6 +23,9 @@ export function StoryStudio({ profile }: { profile: Profile }) {
   const [mode, setMode] = useState<"text" | "image">("text");
   const [text, setText] = useState("");
   const [color, setColor] = useState(STORY_COLORS[0]);
+  const [textColor, setTextColor] = useState(STORY_TEXT_COLORS[0]);
+  const [textStyle, setTextStyle] = useState<StoryTextStyle>("classic");
+  const [textSize, setTextSize] = useState(24);
   const [productId, setProductId] = useState("");
   const [products, setProducts] = useState<{ id: string; title: string }[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
@@ -129,7 +141,14 @@ export function StoryStudio({ profile }: { profile: Profile }) {
     const { error } = await supabase.from("stories").insert({
       merchant_id: profile.id,
       text: mode === "image" ? caption.trim() : text.trim(),
-      bg_color: color,
+      bg_color: encodeStoryAppearance({
+        background: color,
+        textColor,
+        textStyle,
+        textSize,
+        x: mode === "image" ? capPos.x : 50,
+        y: mode === "image" ? capPos.y : 50,
+      }),
       image_url: imageUrl,
       product_id: productId || null,
     });
@@ -210,10 +229,13 @@ export function StoryStudio({ profile }: { profile: Profile }) {
             </button>
             {caption && (
               <p
-                className="absolute font-display text-white text-[15px] text-center leading-snug break-words px-2 cursor-move"
+                className={`absolute font-display text-[15px] text-center leading-snug break-words px-2 cursor-move ${textStyle === "strong" ? "font-black" : "font-semibold"} ${textStyle === "label" ? "rounded-lg py-1" : ""}`}
                 style={{
                   left: `${capPos.x}%`,
                   top: `${capPos.y}%`,
+                  color: textColor,
+                  fontSize: textSize,
+                  background: textStyle === "label" ? "rgba(0,0,0,0.5)" : undefined,
                   transform: "translate(-50%, -50%)",
                   textShadow: "0 1px 6px rgba(0,0,0,0.6)",
                   maxWidth: "90%",
@@ -225,8 +247,8 @@ export function StoryStudio({ profile }: { profile: Profile }) {
           </div>
         ) : (
           <div
-            className="mx-auto w-[150px] aspect-[9/16] rounded-card flex items-center justify-center p-4 text-center text-white font-display text-[15px] leading-snug break-words"
-            style={{ background: color }}
+            className={`mx-auto w-[150px] aspect-[9/16] rounded-card flex items-center justify-center p-4 text-center font-display leading-snug break-words ${textStyle === "strong" ? "font-black" : "font-semibold"} ${textStyle === "label" ? "rounded-xl" : ""}`}
+            style={{ background: color, color: textColor, fontSize: textSize, boxShadow: textStyle === "label" ? "inset 0 0 0 999px rgba(0,0,0,0.38)" : undefined }}
           >
             {text || "نص قصتك"}
           </div>
@@ -262,6 +284,43 @@ export function StoryStudio({ profile }: { profile: Profile }) {
           </div>
         )}
 
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {STORY_TEXT_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setTextColor(c)}
+              aria-label={`لون النص ${c}`}
+              className="size-7 rounded-full border border-line"
+              style={{ background: c, boxShadow: textColor === c ? "0 0 0 2px #faf8f5, 0 0 0 4px #111" : "none" }}
+            />
+          ))}
+          {([
+            ["classic", "عادي"],
+            ["strong", "عريض"],
+            ["label", "خلفية"],
+          ] as [StoryTextStyle, string][]).map(([style, label]) => (
+            <button
+              key={style}
+              type="button"
+              onClick={() => setTextStyle(style)}
+              aria-pressed={textStyle === style}
+              className={`rounded-pill px-3 py-1.5 text-xs ${textStyle === style ? "bg-ink text-white" : "bg-chip text-ink/70"}`}
+            >
+              {label}
+            </button>
+          ))}
+          <input
+            type="range"
+            min={18}
+            max={36}
+            value={textSize}
+            aria-label="حجم النص"
+            onChange={(e) => setTextSize(Number(e.target.value))}
+            className="w-20 accent-ink"
+          />
+        </div>
+
         <Dropdown direction="up" options={[{ value: "", label: "بدون رابط منتج" }, ...products.map((p) => ({ value: p.id, label: p.title }))]} value={productId} onChange={setProductId} className="bg-chip rounded-2xl px-4 py-3 text-sm outline-none" />
 
         {err && <Notice type="error">{err}</Notice>}
@@ -286,7 +345,7 @@ export function StoryStudio({ profile }: { profile: Profile }) {
                   {r.image_url ? (
                     <img src={r.image_url} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
                   ) : (
-                    <span className="w-9 h-9 rounded-full shrink-0" style={{ background: r.bg_color }} />
+                    <span className="w-9 h-9 rounded-full shrink-0" style={{ background: parseStoryAppearance(r.bg_color).background }} />
                   )}
                   <span className="text-sm truncate flex-1">{r.text || "بدون تعليق"}</span>
                   <span className="flex items-center gap-1.5 text-xs text-muted shrink-0">

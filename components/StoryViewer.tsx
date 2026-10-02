@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { X, Heart, Share2, MessageCircle, Eye, ShoppingBag, MoreVertical, Pencil, Trash2, Check, Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { createConversation } from "@/lib/chat";
-import type { Story, StoryMerchant } from "@/lib/types";
+import { parseStoryAppearance, type Story, type StoryMerchant } from "@/lib/types";
 import { FollowButton } from "./FollowButton";
 
 const DURATION = 5000;
@@ -58,6 +58,7 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
   const sid = story?.id;
   const isOwner = viewerId === merchant.id;
   const name = merchant.store_name ?? merchant.full_name ?? merchant.username ?? "متجر";
+  const appearance = parseStoryAppearance(story?.bg_color);
 
   useEffect(() => {
     if (!story) onClose();
@@ -234,7 +235,7 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
 
       <div
         className="relative w-full h-full md:max-w-[420px] md:h-[92vh] md:rounded-[32px] overflow-hidden flex flex-col text-white shadow-2xl"
-        style={{ background: story.bg_color }}
+        style={{ background: appearance.background }}
       >
         {story.image_url && (
           <img src={story.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -323,11 +324,18 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
         </div>
 
         {!editing && (
-          <div className="flex-1 flex items-center justify-center px-8 relative z-[1]">
+          <div className="absolute inset-0 z-[1] pointer-events-none">
             {story.text && (
               <p
-                className="font-display text-[28px] leading-snug text-center break-words"
-                style={story.image_url ? { textShadow: "0 2px 10px rgba(0,0,0,0.6)" } : undefined}
+                className={`absolute max-w-[84%] -translate-x-1/2 -translate-y-1/2 font-display leading-snug text-center break-words ${appearance.textStyle === "strong" ? "font-black" : "font-semibold"} ${appearance.textStyle === "label" ? "rounded-xl px-4 py-2" : ""}`}
+                style={{
+                  left: `${appearance.x}%`,
+                  top: `${appearance.y}%`,
+                  color: appearance.textColor,
+                  fontSize: appearance.textSize,
+                  background: appearance.textStyle === "label" ? "rgba(0,0,0,0.5)" : undefined,
+                  textShadow: story.image_url && appearance.textStyle !== "label" ? "0 2px 10px rgba(0,0,0,0.65)" : undefined,
+                }}
               >
                 {story.text}
               </p>

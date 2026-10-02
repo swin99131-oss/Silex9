@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
 import { Home, Compass, User, MessageCircle, PlusSquare, Search, ShoppingBag, Settings } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useCart } from "@/lib/cart-context";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 
@@ -27,6 +28,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   const [ready, setReady] = useState(false);
   const [isMerchant, setIsMerchant] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [banned, setBanned] = useState<{ reason: string | null } | null>(null);
 
   useEffect(() => {
@@ -35,12 +37,14 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       return;
     }
     supabase.auth.getSession().then(({ data }) => {
+      setCurrentUserId(data.session?.user.id ?? null);
       if (!data.session) {
         try { sessionStorage.setItem("after_login", pathname); } catch {}
         router.replace("/onboarding");
       } else setReady(true);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setCurrentUserId(session?.user.id ?? null);
       if (!session) router.replace("/onboarding");
     });
     return () => sub.subscription.unsubscribe();
@@ -134,6 +138,11 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             </span>
             السلة
           </Link>
+          <NotificationBell
+            userId={currentUserId}
+            showLabel
+            className={`transition-colors ${isActive("/notifications") ? "bg-[#1e3a5f]/10 font-bold" : "text-[#1e3a5f]/70 hover:bg-[#1e3a5f]/5"} flex items-center gap-3 rounded-xl px-3 py-3 text-sm`}
+          />
           <Link
             href="/profile/app-settings"
             className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors ${
@@ -159,6 +168,10 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
           >
             <Search size={18} />
           </Link>
+          <NotificationBell
+            userId={currentUserId}
+            className="w-10 h-10 rounded-full bg-[#1e3a5f]/5 flex items-center justify-center"
+          />
           <Link
             href="/cart"
             aria-label="السلة"
