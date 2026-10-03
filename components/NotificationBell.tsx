@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
 import { useNotifications } from "@/lib/useNotificationRecords";
 
+let lastSoundAt = 0;
+
 export function NotificationBell({ userId, className, showLabel = false }: {
   userId: string | null;
   className: string;
@@ -27,6 +29,10 @@ export function NotificationBell({ userId, className, showLabel = false }: {
     const hasNewUnread = items.some((item) => !item.readAt && !previousIds.current?.has(item.id));
     previousIds.current = currentIds;
     if (!hasNewUnread) return;
+
+    const now = Date.now();
+    if (now - lastSoundAt < 2000) return;
+    lastSoundAt = now;
 
     audio.current ??= new Audio("/sounds/notification.wav");
     audio.current.currentTime = 0;

@@ -1,4 +1,5 @@
 import {
+  BadgeCheck,
   ClipboardList,
   CreditCard,
   Flag,
@@ -25,6 +26,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'الإعلانات', href: '/admin/campaigns', icon: Megaphone },
   { label: 'أسعار الإعلانات', href: '/admin/ad-pricing', icon: CreditCard },
   { label: 'المستخدمون', href: '/admin/users', icon: Users },
+  { label: 'طلبات التوثيق', href: '/admin/verifications', icon: BadgeCheck },
   { label: 'التجار', href: '/admin/merchants', icon: Store },
   { label: 'المنتجات', href: '/admin/products', icon: Package },
   { label: 'الطلبات', href: '/admin/orders', icon: ShoppingCart },

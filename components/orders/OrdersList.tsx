@@ -65,7 +65,7 @@ export function OrdersList({ mode }: { mode: "merchant" | "customer" }) {
     const ownerColumn = mode === "merchant" ? "merchant_id" : "customer_id";
     const { data, error: queryError } = await supabase
       .from("orders")
-      .select("id, customer_id, merchant_id, status, total, items, created_at")
+      .select("id, customer_id, merchant_id, customer_name, status, total_amount, created_at, order_items(product_id, product_name, unit_price, quantity)")
       .eq(ownerColumn, user.id)
       .order("created_at", { ascending: false });
     if (queryError) {
@@ -74,7 +74,21 @@ export function OrdersList({ mode }: { mode: "merchant" | "customer" }) {
       return;
     }
 
-    const rows = (data ?? []) as OrderRow[];
+    const rows: OrderRow[] = ((data ?? []) as any[]).map((r) => ({
+      id: r.id,
+      customer_id: r.customer_id,
+      merchant_id: r.merchant_id,
+      status: r.status,
+      total: Number(r.total_amount ?? 0),
+      created_at: r.created_at,
+      customerName: r.customer_name ?? undefined,
+      items: (r.order_items ?? []).map((i: any) => ({
+        id: i.product_id,
+        name: i.product_name,
+        price: Number(i.unit_price ?? 0),
+        qty: i.quantity,
+      })),
+    }));
     if (mode === "merchant" && rows.length) {
       const customerIds = [...new Set(rows.map((row) => row.customer_id).filter(Boolean))];
       const { data: profiles } = await supabase.from("profiles").select("id, full_name, username").in("id", customerIds);

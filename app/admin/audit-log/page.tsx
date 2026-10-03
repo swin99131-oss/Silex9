@@ -21,6 +21,12 @@ const ACTIONS: Record<string, string> = {
   'report.dismissed': 'تجاهل بلاغ',
   'post.delete': 'حذف منشور مبلّغ عنه',
   'notification.send': 'إرسال تنبيه لمستخدم',
+  'staff.save': 'تعديل صلاحيات مشرف',
+  'staff.remove': 'إزالة مشرف',
+  'verification.approve': 'قبول طلب توثيق',
+  'verification.reject': 'رفض طلب توثيق',
+  'verification.revoke': 'إلغاء توثيق حساب',
+  'verification.settings': 'تعديل شروط التوثيق',
 }
 
 const ENTITIES: Record<string, string> = {

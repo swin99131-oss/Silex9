@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Loader2, Tag, Check, ChevronRight } from "lucide-react";
+import { X, Loader2, Tag, Check, ChevronRight, Type } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   encodeStoryAppearance,
@@ -11,6 +11,8 @@ import {
   type StoryTextStyle,
 } from "@/lib/types";
 import type { CapturedMedia } from "./StoryCamera";
+
+const STYLE_LABEL: Partial<Record<StoryTextStyle, string>> = { classic: "عادي", strong: "عريض", label: "خلفية" };
 
 export function StoryEditor({
   profile,
@@ -140,6 +142,7 @@ export function StoryEditor({
   return (
     <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
       <div className="relative w-full h-full md:max-w-[400px] md:h-[88vh] md:rounded-[28px] overflow-hidden bg-black flex flex-col">
+        {/* منطقة القصة */}
         <div
           ref={canvasRef}
           onPointerMove={onMove}
@@ -169,7 +172,7 @@ export function StoryEditor({
 
           <div
             onPointerDown={startDrag}
-            className="absolute cursor-move select-none touch-none w-[80%] max-w-[260px] z-[1]"
+            className="absolute cursor-move select-none touch-none w-[84%] max-w-[280px] z-[1]"
             style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: "translate(-50%, -50%)" }}
           >
             <textarea
@@ -179,155 +182,173 @@ export function StoryEditor({
               rows={2}
               dir="auto"
               onPointerDown={(e) => e.stopPropagation()}
-              className={`w-full resize-none text-center leading-normal outline-none ${textStyle === "strong" ? "font-black" : "font-semibold"} ${textStyle === "label" ? "rounded-xl px-3 py-2" : "bg-transparent"} placeholder:text-white/50`}
+              className={`w-full resize-none text-center leading-relaxed outline-none ${
+                textStyle === "strong" ? "font-black" : "font-semibold"
+              } ${textStyle === "label" ? "rounded-xl px-4 py-2" : "bg-transparent"} placeholder:text-white/50`}
               style={{
                 color: textColor,
                 fontSize: textSize,
-                background: textStyle === "label" ? "rgba(0,0,0,0.48)" : undefined,
-                textShadow: hasMedia && textStyle !== "label" ? "0 1px 8px rgba(0,0,0,0.65)" : "none",
+                background: textStyle === "label" ? "rgba(0,0,0,0.6)" : undefined,
+                textShadow: hasMedia && textStyle !== "label" ? "0 2px 10px rgba(0,0,0,0.8)" : "none",
               }}
             />
           </div>
         </div>
 
-        <div className="relative z-10 flex items-center justify-between px-4 pt-4">
+        {/* الشريط العلوي */}
+        <div className="relative z-20 flex items-center justify-between px-4 pt-4">
           <button
             onClick={onBack}
-            className="w-9 h-9 rounded-full bg-black/35 flex items-center justify-center text-white"
+            aria-label="رجوع"
+            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={20} />
           </button>
 
-          <div className="flex items-center gap-2">
+          <span className="rounded-full bg-black/40 backdrop-blur-md px-3 py-1 text-[10px] text-white" dir="ltr">
+            {text.length}/{MAX_CHARS}
+          </span>
 
+          <button
+            onClick={onClose}
+            aria-label="إغلاق"
+            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
-            {products.length > 0 && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowProducts((v) => !v)}
-                  aria-label="ربط منتج"
-                  className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                    productId ? "bg-white text-black" : "bg-black/35 text-white"
-                  }`}
-                >
-                  <Tag size={15} />
-                </button>
-                {showProducts && (
-                  <div className="absolute left-0 top-11 bg-neutral-800 rounded-2xl p-2 flex flex-col gap-1 shadow-xl z-20 w-44 max-h-52 overflow-y-auto">
+        {/* الأدوات الجانبية */}
+        <div className="absolute top-20 left-4 z-20 flex flex-col items-center gap-3">
+          {products.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setShowProducts((v) => !v)}
+                aria-label="ربط منتج"
+                className={`w-11 h-11 rounded-full backdrop-blur-md flex items-center justify-center transition shadow-lg ${
+                  productId ? "bg-white text-black" : "bg-black/40 text-white hover:bg-black/60"
+                }`}
+              >
+                <Tag size={19} />
+              </button>
+
+              {showProducts && (
+                <div className="absolute left-14 top-0 bg-neutral-900/95 backdrop-blur-xl border border-white/10 rounded-2xl p-2 flex flex-col gap-1 shadow-2xl z-30 w-48 max-h-56 overflow-y-auto">
+                  <button
+                    onClick={() => {
+                      setProductId("");
+                      setShowProducts(false);
+                    }}
+                    className="text-right px-3 py-2 rounded-xl text-xs text-white/70 hover:bg-white/10 flex items-center justify-between"
+                  >
+                    بدون منتج
+                    {!productId && <Check size={13} />}
+                  </button>
+                  {products.map((p) => (
                     <button
+                      key={p.id}
                       onClick={() => {
-                        setProductId("");
+                        setProductId(p.id);
                         setShowProducts(false);
                       }}
-                      className="text-right px-3 py-2 rounded-xl text-xs text-white/70 hover:bg-white/10 flex items-center justify-between"
+                      className="text-right px-3 py-2 rounded-xl text-xs text-white hover:bg-white/10 flex items-center justify-between gap-2"
                     >
-                      بدون منتج
-                      {!productId && <Check size={13} />}
+                      <span className="truncate">{p.title}</span>
+                      {productId === p.id && <Check size={13} className="shrink-0 text-amber-400" />}
                     </button>
-                    {products.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => {
-                          setProductId(p.id);
-                          setShowProducts(false);
-                        }}
-                        className="text-right px-3 py-2 rounded-xl text-xs text-white hover:bg-white/10 flex items-center justify-between gap-2"
-                      >
-                        <span className="truncate">{p.title}</span>
-                        {productId === p.id && <Check size={13} className="shrink-0" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <button
-              onClick={onClose}
-              className="w-9 h-9 rounded-full bg-black/35 flex items-center justify-center text-white"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-
-        <div className="relative z-10 self-center -mt-1 px-3 py-1 rounded-full bg-black/35 text-white text-[10px]" dir="ltr">
-          {text.length}/{MAX_CHARS}
-        </div>
-
-        {!hasMedia && (
-          <div className="relative z-10 flex items-center gap-3 overflow-x-auto no-scrollbar px-4 pb-3">
-            {STORY_COLORS.map((c) => (
-              <button
-                key={c}
-                onClick={() => setColor(c)}
-                aria-label={c}
-                className="w-11 h-11 rounded-full shrink-0 border-2 transition-transform duration-150"
-                style={{
-                  background: c,
-                  borderColor: color === c ? "#ffffff" : "transparent",
-                  transform: color === c ? "scale(1.12)" : "scale(1)",
-                  boxShadow: color === c ? "0 2px 10px rgba(0,0,0,0.4)" : "none",
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        <div className="relative z-10 mx-auto flex items-center gap-2 rounded-full bg-black/45 px-3 py-2">
-          {STORY_TEXT_COLORS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setTextColor(c)}
-              aria-label={`لون النص ${c}`}
-              className="size-6 rounded-full border border-white/70"
-              style={{ background: c, boxShadow: textColor === c ? "0 0 0 2px #111, 0 0 0 3px #fff" : "none" }}
-            />
-          ))}
-          <span className="mx-1 h-5 w-px bg-white/30" />
-          {([
-            ["classic", "عادي"],
-            ["strong", "عريض"],
-            ["label", "خلفية"],
-          ] as [StoryTextStyle, string][]).map(([style, label]) => (
-            <button
-              key={style}
-              onClick={() => setTextStyle(style)}
-              aria-pressed={textStyle === style}
-              className={`rounded-full px-2.5 py-1 text-[10px] ${textStyle === style ? "bg-white text-black" : "text-white"}`}
-            >
-              {label}
-            </button>
-          ))}
-          <input
-            type="range"
-            min={18}
-            max={42}
-            value={textSize}
-            aria-label="حجم النص"
-            onChange={(e) => setTextSize(Number(e.target.value))}
-            className="w-14 accent-white"
-          />
-        </div>
-
-        <div className="flex-1" />
-
-        <div className="relative z-10 px-4 pb-6 pt-3 flex flex-col gap-2">
-          {err && (
-            <p className="text-xs text-red-300 bg-red-500/15 rounded-xl px-3 py-2 text-center">{err}</p>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
+
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={() => {
+                if (textStyle === "classic") setTextStyle("strong");
+                else if (textStyle === "strong") setTextStyle("label");
+                else setTextStyle("classic");
+              }}
+              aria-label="نمط الخط"
+              className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/60 transition shadow-lg"
+            >
+              <Type size={19} />
+            </button>
+            <span className="text-[10px] text-white/90 [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+              {STYLE_LABEL[textStyle] ?? ""}
+            </span>
+          </div>
+        </div>
+
+        {/* الجزء السفلي */}
+        <div className="relative z-20 mt-auto pb-6 pt-3 flex flex-col gap-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+          {!hasMedia && (
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar px-4">
+              {STORY_COLORS.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setColor(c)}
+                  aria-label={c}
+                  className="w-11 h-11 rounded-full shrink-0 border-2 transition-transform duration-150"
+                  style={{
+                    background: c,
+                    borderColor: color === c ? "#ffffff" : "transparent",
+                    transform: color === c ? "scale(1.12)" : "scale(1)",
+                    boxShadow: color === c ? "0 2px 10px rgba(0,0,0,0.4)" : "none",
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="mx-4 flex items-center justify-center gap-3 bg-black/50 backdrop-blur-md rounded-full px-4 py-2 border border-white/10">
+            <div className="flex items-center gap-1.5">
+              {STORY_TEXT_COLORS.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setTextColor(c)}
+                  aria-label={`لون النص ${c}`}
+                  className="w-5 h-5 rounded-full border border-white/50 transition-transform"
+                  style={{
+                    background: c,
+                    transform: textColor === c ? "scale(1.2)" : "scale(1)",
+                    boxShadow: textColor === c ? "0 0 0 2px #fff" : "none",
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="w-px h-4 bg-white/20 mx-1" />
+
+            <input
+              type="range"
+              min={18}
+              max={42}
+              value={textSize}
+              aria-label="حجم النص"
+              onChange={(e) => setTextSize(Number(e.target.value))}
+              className="w-20 accent-white cursor-pointer"
+            />
+          </div>
+
+          {err && (
+            <p className="mx-4 text-xs text-red-300 bg-red-500/20 backdrop-blur-md rounded-xl px-3 py-2 text-center border border-red-500/30">
+              {err}
+            </p>
+          )}
+
           <button
             onClick={publish}
             disabled={busy}
-            className="h-12 rounded-full bg-white text-black text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2"
+            className="mx-4 h-12 rounded-full bg-white text-black text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-2 shadow-xl hover:bg-neutral-100 transition active:scale-[0.98]"
           >
             {busy ? (
               <>
-                <Loader2 size={16} className="animate-spin" />
-                جارٍ النشر… {progress}%
+                <Loader2 size={18} className="animate-spin" />
+                <span>جارٍ النشر… {progress}%</span>
               </>
             ) : (
-              "مشاركة القصة"
+              <span>مشاركة القصة</span>
             )}
           </button>
         </div>

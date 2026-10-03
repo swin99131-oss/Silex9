@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { VerificationCard } from "./verification-card"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { useStore } from "@/components/store/store-context"
@@ -137,6 +138,8 @@ export function SettingsContent() {
           </div>
         )}
       </section>
+
+      <VerificationCard />
 
       <section className="rounded-xl border border-border bg-card p-5">
         <h3 className="mb-2 text-lg font-semibold">الإشعارات</h3>

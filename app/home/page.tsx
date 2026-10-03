@@ -1,13 +1,14 @@
 "use client";
 
 import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
 import { supabase } from "@/lib/supabase";
 import { StoriesBar } from "@/components/StoriesBar";
 import { PostCard, type FeedPost } from "@/components/PostCard";
 import { FollowButton } from "@/components/FollowButton";
+import { SponsoredCard, type AdItem } from "@/components/SponsoredCard";
 import { getFollowingFeed, getDiscoverFeed, getSuggestedStores, type SuggestedStore } from "@/lib/feed";
 
 export default function HomePage() {
@@ -15,17 +16,19 @@ export default function HomePage() {
   const [feed, setFeed] = useState<FeedPost[]>([]);
   const [stores, setStores] = useState<SuggestedStore[]>([]);
   const [following, setFollowing] = useState(0);
+  const [ads, setAds] = useState<AdItem[]>([]);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     let alive = true;
     (async () => {
-      const [mine, discover, sug, hides] = await Promise.all([
+      const [mine, discover, sug, hides, adsRes] = await Promise.all([
         getFollowingFeed(user.id),
         getDiscoverFeed(user.id),
         getSuggestedStores(user.id),
         supabase.from("post_hides").select("post_id").eq("user_id", user.id),
+        supabase.rpc("get_active_ads", { p_limit: 6 }),
       ]);
       if (!alive) return;
       const hidden = new Set(((hides.data ?? []) as { post_id: string }[]).map((r) => r.post_id));
@@ -35,6 +38,7 @@ export default function HomePage() {
       );
       setFollowing(mine.length);
       setStores(sug);
+      setAds(Array.isArray(adsRes.data) ? (adsRes.data as AdItem[]) : []);
       setReady(true);
     })();
     return () => { alive = false; };
@@ -70,9 +74,15 @@ export default function HomePage() {
       )}
 
       <div className="flex flex-col gap-4 px-6 mt-5 max-w-lg mx-auto md:px-0">
-        {feed.map((p) => (
-          <PostCard key={p.id} post={p} />
+        {feed.map((p, idx) => (
+          <Fragment key={p.id}>
+            <PostCard post={p} />
+            {ads.length > 0 && (idx + 1) % 4 === 0 && (
+              <SponsoredCard ad={ads[Math.floor(idx / 4) % ads.length]} />
+            )}
+          </Fragment>
         ))}
+        {ready && ads.length > 0 && feed.length > 0 && feed.length < 4 && <SponsoredCard ad={ads[0]} />}
         {ready && feed.length === 0 && (
           <p className="text-center text-sm text-muted py-10">لا توجد منشورات بعد</p>
         )}

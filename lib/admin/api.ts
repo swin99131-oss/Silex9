@@ -258,7 +258,7 @@ export async function setMerchantVerified(userId: string, verified: boolean) {
   await logAction(verified ? 'user.verify' : 'user.unverify', 'profiles', userId)
 }
 
-export async function sendNotification(userId: string, title: string, body: string, type = 'admin') {
+export async function sendNotification(userId: string, title: string, body: string, type = 'general') {
   const { error } = await supabase.from('notifications').insert({ user_id: userId, title, body, type })
   if (error) throw new Error(error.message)
   await logAction('notification.send', 'profiles', userId)

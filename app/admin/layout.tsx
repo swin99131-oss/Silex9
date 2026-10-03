@@ -3,6 +3,7 @@ import { LogOut } from 'lucide-react'
 import AdminGuard from '@/components/admin/AdminGuard'
 import AdminNav from '@/components/admin/AdminNav'
 import MobileNav from '@/components/admin/MobileNav'
+import AdminPermGate from '@/components/admin/AdminPermGate'
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -37,7 +38,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <AdminNav />
           </aside>
           <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-10">
-            <div className="mx-auto max-w-6xl">{children}</div>
+            <div className="mx-auto max-w-6xl">
+              <AdminPermGate>{children}</AdminPermGate>
+            </div>
           </main>
         </div>
       </div>
