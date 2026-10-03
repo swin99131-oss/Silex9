@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
@@ -10,7 +11,12 @@ export function BannedScreen({ reason }: { reason: string | null }) {
   const router = useRouter();
 
   async function logout() {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("تعذّر تسجيل الخروج، حاول مجدداً");
+      return;
+    }
+    toast.success("تم تسجيل الخروج بنجاح");
     router.replace("/onboarding");
   }
 

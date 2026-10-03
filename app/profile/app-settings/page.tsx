@@ -65,6 +65,7 @@ export default function AppSettingsPage() {
       toast.error("تعذّر تسجيل الخروج، حاول مجدداً");
       return;
     }
+    toast.success("تم تسجيل الخروج بنجاح");
     router.replace("/onboarding");
   }
 

@@ -132,3 +132,4 @@ export type PlatformSetting = {
   value: string
   updated_at: string
 }
+

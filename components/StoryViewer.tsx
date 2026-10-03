@@ -241,6 +241,8 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
           <img src={story.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
         )}
 
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 z-[11] h-36 bg-gradient-to-b from-black/75 via-black/35 to-transparent" />
+
         <div className="absolute top-0 inset-x-0 z-20 px-3 pt-3 flex gap-1">
           {stories.map((s, j) => (
             <div key={s.id} className="h-[3px] flex-1 rounded-full bg-white/30 overflow-hidden">
@@ -270,8 +272,8 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
           className="absolute inset-y-0 left-0 w-1/2 z-10"
         />
 
-        <div className="relative z-20 flex items-center gap-3 px-4 pt-8">
-          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-sm font-display shrink-0 overflow-hidden">
+        <div className="relative z-20 flex items-center gap-3 px-4 pt-9">
+          <div className="w-9 h-9 rounded-full border border-white/40 bg-black/55 flex items-center justify-center text-sm font-display shrink-0 overflow-hidden shadow-lg">
             {merchant.avatar_url ? (
               <img src={merchant.avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -289,7 +291,7 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
               <button
                 onClick={() => setShowMenu((v) => !v)}
                 aria-label="خيارات"
-                className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center"
+                className="w-9 h-9 rounded-full border border-white/30 bg-black/60 shadow-lg flex items-center justify-center"
               >
                 <MoreVertical size={18} />
               </button>
@@ -317,7 +319,7 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
           <button
             onClick={onClose}
             aria-label="إغلاق"
-            className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center"
+            className="w-9 h-9 rounded-full border border-white/30 bg-black/60 shadow-lg flex items-center justify-center"
           >
             <X size={18} />
           </button>
@@ -334,7 +336,12 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
                   color: appearance.textColor,
                   fontSize: appearance.textSize,
                   background: appearance.textStyle === "label" ? "rgba(0,0,0,0.5)" : undefined,
-                  textShadow: story.image_url && appearance.textStyle !== "label" ? "0 2px 10px rgba(0,0,0,0.65)" : undefined,
+                  textShadow:
+                    appearance.textStyle === "label"
+                      ? undefined
+                      : appearance.textColor.toLowerCase() === "#111111"
+                        ? "0 1px 8px rgba(255,255,255,0.8)"
+                        : "0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.95)",
                 }}
               >
                 {story.text}
@@ -352,12 +359,12 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
                 rows={3}
                 autoFocus
                 dir="auto"
-                className="bg-white/10 backdrop-blur rounded-2xl px-4 py-3 text-white text-center outline-none border border-white/20"
+                className="rounded-2xl border border-white/35 bg-black/65 px-4 py-3 text-center text-white shadow-xl outline-none backdrop-blur-md placeholder:text-white/75"
               />
               <div className="flex gap-2">
                 <button
                   onClick={() => setEditing(false)}
-                  className="flex-1 bg-white/15 rounded-pill py-3 text-sm font-semibold"
+                  className="flex-1 rounded-pill border border-white/35 bg-black/60 py-3 text-sm font-semibold shadow-lg backdrop-blur-md"
                 >
                   إلغاء
                 </button>
@@ -375,7 +382,7 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
 
         <div className="flex-1" />
 
-        <div className="relative z-20 px-4 pb-6 flex flex-col gap-3">
+        <div className="relative z-20 flex flex-col gap-3 bg-gradient-to-t from-black/85 via-black/55 to-transparent px-4 pb-6 pt-6">
           {note && <p className="text-center text-xs">{note}</p>}
           {story.product_id && (
             <Link
@@ -390,7 +397,7 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
           {isOwner ? (
             <button
               onClick={() => setSheet(true)}
-              className="w-full h-11 rounded-pill bg-white/15 flex items-center justify-center gap-2 text-sm"
+              className="w-full h-11 rounded-pill border border-white/30 bg-black/65 shadow-lg backdrop-blur-md flex items-center justify-center gap-2 text-sm"
             >
               <Eye size={16} />
               {viewers.length} مشاهدة
@@ -398,7 +405,7 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
           ) : (
             <div className="flex items-center gap-2">
               {/* حقل رد سريع */}
-              <div className="flex-1 flex items-center gap-2 bg-white/15 rounded-pill px-3 h-11">
+              <div className="flex-1 flex items-center gap-2 rounded-pill border border-white/35 bg-black/70 px-3 h-11 shadow-lg backdrop-blur-md">
                 <input
                   value={reply}
                   onChange={(e) => setReply(e.target.value)}
@@ -408,7 +415,7 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
                     if (e.key === "Enter") sendQuickReply();
                   }}
                   placeholder="أرسل رداً..."
-                  className="flex-1 bg-transparent text-sm outline-none placeholder:text-white/60 min-w-0"
+                  className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/80"
                 />
                 {reply.trim() && (
                   <button onClick={sendQuickReply} disabled={sendingReply} aria-label="إرسال">
@@ -419,21 +426,21 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
               <button
                 onClick={messageOwner}
                 aria-label="فتح المحادثة"
-                className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center shrink-0"
+                className="w-11 h-11 shrink-0 rounded-full border border-white/35 bg-black/70 shadow-lg backdrop-blur-md flex items-center justify-center"
               >
                 <MessageCircle size={18} />
               </button>
               <button
                 onClick={toggleLike}
                 aria-label="إعجاب"
-                className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center shrink-0"
+                className={`w-11 h-11 shrink-0 rounded-full border border-white/35 bg-black/70 shadow-lg backdrop-blur-md flex items-center justify-center ${liked ? "text-rose-300" : "text-white"}`}
               >
                 <Heart size={18} fill={liked ? "currentColor" : "none"} />
               </button>
               <button
                 onClick={share}
                 aria-label="مشاركة"
-                className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center shrink-0"
+                className="w-11 h-11 shrink-0 rounded-full border border-white/35 bg-black/70 shadow-lg backdrop-blur-md flex items-center justify-center"
               >
                 <Share2 size={18} />
               </button>

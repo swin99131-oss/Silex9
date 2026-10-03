@@ -6,6 +6,7 @@ import { PageLoading } from "@/components/ui/Skeleton";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   ArrowRight,
   Camera,
@@ -140,8 +141,13 @@ export default function SettingsPage() {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.push("/home");
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("تعذّر تسجيل الخروج، حاول مجدداً");
+      return;
+    }
+    toast.success("تم تسجيل الخروج بنجاح");
+    router.replace("/onboarding");
   }
 
   const isMerchant = profile?.role === "merchant";

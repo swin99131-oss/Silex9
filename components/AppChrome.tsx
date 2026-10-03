@@ -11,6 +11,7 @@ import { Home, Compass, User, MessageCircle, PlusSquare, Search, ShoppingBag, Se
 import { NotificationBell } from "@/components/NotificationBell";
 import { useCart } from "@/lib/cart-context";
 import { PageSkeleton } from "@/components/ui/Skeleton";
+import { toast } from "sonner";
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -49,6 +50,14 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     });
     return () => sub.subscription.unsubscribe();
   }, [pathname, isAuthPage, router]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("auth") !== "login_success") return;
+    toast.success("تم تسجيل الدخول بنجاح");
+    url.searchParams.delete("auth");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [pathname]);
 
   useEffect(() => {
     if (isAuthPage) return;

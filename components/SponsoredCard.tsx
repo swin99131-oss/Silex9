@@ -36,7 +36,13 @@ export function SponsoredCard({ ad }: { ad: AdItem }) {
           )}
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{ad.merchant_name}</span>
-        <span className="shrink-0 rounded-pill bg-chip px-2.5 py-1 text-[10px] text-muted">ممول</span>
+        <span
+          role="note"
+          aria-label="إعلان ممول"
+          className="shrink-0 rounded-full border border-amber-300 bg-amber-100 px-3 py-1.5 text-[11px] font-bold text-amber-950"
+        >
+          إعلان ممول
+        </span>
       </div>
 
       {image && (

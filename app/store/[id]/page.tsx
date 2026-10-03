@@ -94,7 +94,7 @@ export default function StorePage() {
 
   return (
     <div>
-      <ScreenHeader title={name} />
+      <ScreenHeader />
 
       <div className="px-6 mt-2 flex items-center gap-4 md:px-10">
         <button
@@ -105,7 +105,11 @@ export default function StorePage() {
           }`}
         >
           <span className="w-full h-full rounded-full border-2 border-card bg-chip flex items-center justify-center text-lg font-display">
-            {name.charAt(0)}
+            {store.avatar_url ? (
+              <img src={store.avatar_url} alt={name} className="h-full w-full object-cover" />
+            ) : (
+              name.charAt(0)
+            )}
           </span>
         </button>
         <div className="min-w-0">

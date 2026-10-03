@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?error=google_oauth", request.url));
   }
 
-  const response = NextResponse.redirect(new URL(next, request.url));
+  const destination = new URL(next, request.url);
+  destination.searchParams.set("auth", "login_success");
+  const response = NextResponse.redirect(destination);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {

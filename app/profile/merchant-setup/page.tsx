@@ -1,6 +1,7 @@
 "use client";
 
 import { WhatsappInput, isValidWhatsapp } from "@/components/ui/WhatsappInput";
+import { CountrySelect } from "@/components/ui/CountrySelect";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Notice } from "@/components/ui/Notice";
 import { PageLoading } from "@/components/ui/Skeleton";
@@ -126,14 +127,7 @@ export default function MerchantSetupPage() {
 
         <div>
           <label className="block text-xs font-medium mb-1">الدولة</label>
-          <select value={country} onChange={(e) => setCountry(e.target.value)} className={field}>
-            <option value="">اختر الدولة</option>
-            {countries.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+          <CountrySelect options={countries} value={country} onChange={setCountry} className={field} />
         </div>
 
         <div>

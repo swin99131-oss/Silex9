@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CountrySelect } from "@/components/ui/CountrySelect";
 
 // رمز الدولة (ISO) ومفتاح الاتصال
 const DIAL: [string, string][] = [
@@ -59,7 +60,7 @@ export function WhatsappInput({
       try {
         n = dn?.of(iso) ?? iso;
       } catch {}
-      return { iso, code: c, label: `${n} (+${c})` };
+      return { iso, code: c, label: `${n} (+${c})`, shortLabel: `+${c}` };
     });
   }, []);
 
@@ -67,21 +68,17 @@ export function WhatsappInput({
 
   return (
     <div className="flex gap-2" dir="ltr">
-      <select
+      <CountrySelect
+        options={options.map((option) => ({ value: option.code, label: option.label, shortLabel: option.shortLabel }))}
         value={code}
-        onChange={(e) => {
-          setCode(e.target.value);
-          emit(e.target.value, local);
+        onChange={(nextCode) => {
+          setCode(nextCode);
+          emit(nextCode, local);
         }}
-        aria-label="مفتاح الدولة"
+        searchPlaceholder="ابحث عن دولة أو رمز..."
+        triggerDir="ltr"
         className="w-36 shrink-0 rounded-xl border border-line/40 bg-chip px-2 py-2.5 text-xs outline-none focus:border-ink"
-      >
-        {options.map((o) => (
-          <option key={o.iso} value={o.code}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      />
       <input
         value={local}
         inputMode="tel"

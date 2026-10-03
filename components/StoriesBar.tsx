@@ -3,7 +3,7 @@
 import { VerifiedBadge, verifiedOf } from "@/components/VerifiedBadge";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Type, ImagePlus, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/lib/useProfile";
 import { parseStoryAppearance, type Story, type StoryMerchant } from "@/lib/types";
@@ -27,6 +27,8 @@ export function StoriesBar() {
   const [open, setOpen] = useState<string | null>(null);
 
   const [showCamera, setShowCamera] = useState(false);
+  const [showCreateOptions, setShowCreateOptions] = useState(false);
+  const [textOnly, setTextOnly] = useState(false);
   const [captured, setCaptured] = useState<CapturedMedia | null>(null);
   const [products, setProducts] = useState<{ id: string; title: string }[]>([]);
   const [pendingOpenId, setPendingOpenId] = useState<string | null>(null);
@@ -101,6 +103,7 @@ export function StoriesBar() {
 
   async function handlePublished(newStoryId: string) {
     setCaptured(null);
+    setTextOnly(false);
     setPendingOpenId(newStoryId);
     await load();
   }
@@ -130,7 +133,7 @@ export function StoriesBar() {
                     <p className="text-xs mt-2 truncate">قصتي</p>
                   </button>
                   <button
-                    onClick={() => setShowCamera(true)}
+                    onClick={() => setShowCreateOptions(true)}
                     aria-label="أضف قصة جديدة"
                     className="absolute bottom-5 left-0 z-10 w-7 h-7 rounded-full bg-black border-[3px] border-card flex items-center justify-center shadow-lg"
                   >
@@ -138,7 +141,7 @@ export function StoriesBar() {
                   </button>
                 </div>
               ) : (
-                <button onClick={() => setShowCamera(true)} className="block w-full">
+                <button onClick={() => setShowCreateOptions(true)} className="block w-full">
                   <div className="w-[72px] h-[72px] rounded-full mx-auto border-2 border-dashed border-line bg-chip flex items-center justify-center">
                     <Plus size={26} className="text-ink/60" strokeWidth={2} />
                   </div>
@@ -203,15 +206,60 @@ export function StoriesBar() {
         />
       )}
 
-      {captured && profile && (
+      {showCreateOptions && (
+        <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/55 p-5" onClick={() => setShowCreateOptions(false)}>
+          <div className="w-full max-w-sm rounded-3xl bg-card p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold">قصة جديدة</h2>
+              <button type="button" onClick={() => setShowCreateOptions(false)} aria-label="إغلاق" className="flex size-9 items-center justify-center rounded-full bg-chip">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setTextOnly(true);
+                  setShowCreateOptions(false);
+                }}
+                className="flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl bg-chip px-3 py-4 text-sm font-semibold transition-colors hover:bg-line/60"
+              >
+                <Type size={24} />
+                كتابة
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateOptions(false);
+                  setShowCamera(true);
+                }}
+                className="flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl bg-ink px-3 py-4 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                <ImagePlus size={24} />
+                صورة أو فيديو
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {(captured || textOnly) && profile && (
         <StoryEditor
           profile={profile}
           products={products}
           initialMedia={captured}
-          onClose={() => setCaptured(null)}
-          onBack={() => {
+          onClose={() => {
             setCaptured(null);
-            setShowCamera(true);
+            setTextOnly(false);
+          }}
+          onBack={() => {
+            if (textOnly) {
+              setTextOnly(false);
+              setShowCreateOptions(true);
+            } else {
+              setCaptured(null);
+              setShowCamera(true);
+            }
           }}
           onPublished={handlePublished}
         />

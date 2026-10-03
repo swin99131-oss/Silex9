@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { LogOut } from 'lucide-react'
 import AdminGuard from '@/components/admin/AdminGuard'
+import AdminLogoutButton from '@/components/admin/AdminLogoutButton'
 import AdminNav from '@/components/admin/AdminNav'
 import MobileNav from '@/components/admin/MobileNav'
 import AdminPermGate from '@/components/admin/AdminPermGate'
@@ -24,11 +24,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <span className="hidden text-sm sm:block">مشرف النظام</span>
             </summary>
             <div className="absolute left-0 top-11 min-w-44 rounded-2xl border border-border bg-card p-2 text-right shadow-soft">
-              {/* TODO: ربط تسجيل الخروج مع Supabase */}
-              <button type="button" className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-chip">
-                <LogOut aria-hidden="true" className="size-4 shrink-0" />
-                <span>تسجيل الخروج</span>
-              </button>
+              <AdminLogoutButton />
             </div>
           </details>
         </header>

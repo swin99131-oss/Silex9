@@ -16,6 +16,7 @@ type Status = {
   eligible: boolean
   request_status: string | null
   review_note: string | null
+  expires_at?: string | null
 }
 
 function Progress({ label, value, goal }: { label: string; value: number; goal: number }) {
@@ -83,7 +84,14 @@ export function VerificationCard() {
       </div>
 
       {st.verified ? (
-        <p className="mt-4 text-sm text-muted">حسابك موثّق، وتظهر الشارة بجانب اسم متجرك لكل الزبائن.</p>
+        <div className="mt-4 space-y-2">
+          <p className="text-sm font-semibold text-emerald-700">حسابك موثّق، وتظهر الشارة بجانب اسم متجرك للزبائن.</p>
+          {st.expires_at && (
+            <p className="text-sm text-muted">
+              تنتهي مدة التوثيق في {new Date(st.expires_at).toLocaleDateString("ar")}.
+            </p>
+          )}
+        </div>
       ) : pending ? (
         <p className="mt-4 text-sm text-muted">طلبك قيد المراجعة، سيصلك إشعار عند القرار.</p>
       ) : (
@@ -92,7 +100,7 @@ export function VerificationCard() {
             <p className="rounded-lg bg-red-100 p-3 text-sm text-red-800">سبب الرفض السابق: {st.review_note}</p>
           )}
           <p className="text-sm text-muted">
-            التوثيق يعطي متجرك شارة موثّق. يُمنح مجاناً لفترة أولى لمن يستوفي الشروط التالية:
+            قدّم طلب توثيق مجاني للشهر الأول. يبدأ احتساب المدة من تاريخ قبول الأدمن، وتظهر الشارة بعد الموافقة. يشترط استيفاء التالي:
           </p>
           <Progress label="عمر الحساب (أيام)" value={st.days} goal={st.min_days} />
           <Progress label="عدد المتابعين" value={st.followers} goal={st.min_followers} />

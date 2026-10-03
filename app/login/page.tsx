@@ -5,6 +5,7 @@ import { useState, useEffect, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
@@ -71,6 +72,7 @@ export default function LoginPage() {
           dest = sessionStorage.getItem("after_login") || "/home";
           sessionStorage.removeItem("after_login");
         } catch {}
+        toast.success("تم تسجيل الدخول بنجاح");
         router.push(dest);
       }
     } catch (error) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Loader2, Tag, Check, ChevronRight, Type } from "lucide-react";
+import { X, Loader2, Tag, Check, ChevronRight, Pencil, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   encodeStoryAppearance,
@@ -11,8 +11,6 @@ import {
   type StoryTextStyle,
 } from "@/lib/types";
 import type { CapturedMedia } from "./StoryCamera";
-
-const STYLE_LABEL: Partial<Record<StoryTextStyle, string>> = { classic: "عادي", strong: "عريض", label: "خلفية" };
 
 export function StoryEditor({
   profile,
@@ -43,7 +41,10 @@ export function StoryEditor({
   const [err, setErr] = useState("");
 
   const canvasRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
+  const textInputRef = useRef<HTMLTextAreaElement>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const dragStart = useRef<{ pointerId: number; x: number; y: number; pos: { x: number; y: number } } | null>(null);
+  const pinchStart = useRef<{ distance: number; size: number } | null>(null);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const MAX_CHARS = 40;
 
@@ -56,17 +57,48 @@ export function StoryEditor({
     };
   }, [initialMedia]);
 
-  function startDrag(e: React.PointerEvent) {
-    dragging.current = true;
+  function startTextGesture(e: React.PointerEvent) {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 1) {
+      dragStart.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, pos: textPos };
+      return;
+    }
+    if (pointers.current.size >= 2) {
+      const [first, second] = Array.from(pointers.current.values());
+      pinchStart.current = { distance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y)), size: textSize };
+      dragStart.current = null;
+    }
   }
-  function endDrag() {
-    dragging.current = false;
+
+  function endTextGesture(e: React.PointerEvent) {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size === 0) {
+      dragStart.current = null;
+      pinchStart.current = null;
+    } else if (pointers.current.size === 1) {
+      const [pointerId, point] = Array.from(pointers.current.entries())[0];
+      dragStart.current = { pointerId, x: point.x, y: point.y, pos: textPos };
+      pinchStart.current = null;
+    }
   }
+
   function onMove(e: React.PointerEvent) {
-    if (!dragging.current || !canvasRef.current) return;
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.current.size >= 2 && pinchStart.current) {
+      const [first, second] = Array.from(pointers.current.values());
+      const distance = Math.hypot(second.x - first.x, second.y - first.y);
+      setTextSize(Math.min(42, Math.max(18, pinchStart.current.size * distance / pinchStart.current.distance)));
+      return;
+    }
+
+    if (!canvasRef.current || dragStart.current?.pointerId !== e.pointerId) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const x = dragStart.current.pos.x + ((e.clientX - dragStart.current.x) / rect.width) * 100;
+    const y = dragStart.current.pos.y + ((e.clientY - dragStart.current.y) / rect.height) * 100;
     setTextPos({ x: Math.min(90, Math.max(10, x)), y: Math.min(90, Math.max(10, y)) });
   }
 
@@ -146,8 +178,8 @@ export function StoryEditor({
         <div
           ref={canvasRef}
           onPointerMove={onMove}
-          onPointerUp={endDrag}
-          onPointerLeave={endDrag}
+          onPointerUp={endTextGesture}
+          onPointerCancel={endTextGesture}
           className="absolute inset-0"
           style={{ background: hasMedia ? "#000" : color }}
         >
@@ -171,7 +203,7 @@ export function StoryEditor({
           )}
 
           <div
-            onPointerDown={startDrag}
+            onPointerDown={startTextGesture}
             className="absolute cursor-move select-none touch-none w-[84%] max-w-[280px] z-[1]"
             style={{ left: `${textPos.x}%`, top: `${textPos.y}%`, transform: "translate(-50%, -50%)" }}
           >
@@ -181,15 +213,20 @@ export function StoryEditor({
               placeholder="اكتب هنا"
               rows={2}
               dir="auto"
-              onPointerDown={(e) => e.stopPropagation()}
+              ref={textInputRef}
               className={`w-full resize-none text-center leading-relaxed outline-none ${
                 textStyle === "strong" ? "font-black" : "font-semibold"
-              } ${textStyle === "label" ? "rounded-xl px-4 py-2" : "bg-transparent"} placeholder:text-white/50`}
+              } ${textStyle === "label" ? "rounded-xl px-4 py-2" : "bg-transparent"} ${textColor.toLowerCase() === "#111111" ? "placeholder:text-black/65" : "placeholder:text-white/85"}`}
               style={{
                 color: textColor,
                 fontSize: textSize,
                 background: textStyle === "label" ? "rgba(0,0,0,0.6)" : undefined,
-                textShadow: hasMedia && textStyle !== "label" ? "0 2px 10px rgba(0,0,0,0.8)" : "none",
+                textShadow:
+                  textStyle === "label"
+                    ? "none"
+                    : textColor.toLowerCase() === "#111111"
+                      ? "0 1px 8px rgba(255,255,255,0.8)"
+                      : "0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.95)",
               }}
             />
           </div>
@@ -220,6 +257,22 @@ export function StoryEditor({
 
         {/* الأدوات الجانبية */}
         <div className="absolute top-20 left-4 z-20 flex flex-col items-center gap-3">
+          {!hasMedia && (
+            <button
+              type="button"
+              onClick={() => {
+                const current = STORY_COLORS.indexOf(color);
+                setColor(STORY_COLORS[(current + 1) % STORY_COLORS.length]);
+              }}
+              aria-label="تغيير لون الخلفية"
+              title="تغيير لون الخلفية"
+              className="relative size-11 overflow-hidden rounded-full border-2 border-white shadow-lg transition-transform active:scale-90"
+              style={{ background: color }}
+            >
+              <RefreshCw size={16} className="absolute bottom-0.5 right-0.5 rounded-full bg-black/60 p-0.5 text-white" />
+            </button>
+          )}
+
           {products.length > 0 && (
             <div className="relative">
               <button
@@ -265,42 +318,20 @@ export function StoryEditor({
           <div className="flex flex-col items-center gap-1">
             <button
               onClick={() => {
-                if (textStyle === "classic") setTextStyle("strong");
-                else if (textStyle === "strong") setTextStyle("label");
-                else setTextStyle("classic");
+                setTextStyle("classic");
+                textInputRef.current?.focus();
               }}
-              aria-label="نمط الخط"
+              aria-label="كتابة النص بالخط العادي"
+              title="كتابة النص بالخط العادي"
               className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/60 transition shadow-lg"
             >
-              <Type size={19} />
+              <Pencil size={18} />
             </button>
-            <span className="text-[10px] text-white/90 [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
-              {STYLE_LABEL[textStyle] ?? ""}
-            </span>
           </div>
         </div>
 
         {/* الجزء السفلي */}
         <div className="relative z-20 mt-auto pb-6 pt-3 flex flex-col gap-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-          {!hasMedia && (
-            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar px-4">
-              {STORY_COLORS.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setColor(c)}
-                  aria-label={c}
-                  className="w-11 h-11 rounded-full shrink-0 border-2 transition-transform duration-150"
-                  style={{
-                    background: c,
-                    borderColor: color === c ? "#ffffff" : "transparent",
-                    transform: color === c ? "scale(1.12)" : "scale(1)",
-                    boxShadow: color === c ? "0 2px 10px rgba(0,0,0,0.4)" : "none",
-                  }}
-                />
-              ))}
-            </div>
-          )}
-
           <div className="mx-4 flex items-center justify-center gap-3 bg-black/50 backdrop-blur-md rounded-full px-4 py-2 border border-white/10">
             <div className="flex items-center gap-1.5">
               {STORY_TEXT_COLORS.map((c) => (
@@ -320,15 +351,7 @@ export function StoryEditor({
 
             <div className="w-px h-4 bg-white/20 mx-1" />
 
-            <input
-              type="range"
-              min={18}
-              max={42}
-              value={textSize}
-              aria-label="حجم النص"
-              onChange={(e) => setTextSize(Number(e.target.value))}
-              className="w-20 accent-white cursor-pointer"
-            />
+            <span className="text-[10px] text-white/80">حرّك النص أو كبّره بإصبعين</span>
           </div>
 
           {err && (

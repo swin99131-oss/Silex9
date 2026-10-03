@@ -3,7 +3,7 @@
 import { Notice } from "@/components/ui/Notice";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Eye, Trash2, ImagePlus, X, Type } from "lucide-react";
+import { Eye, Trash2, ImagePlus, X, Type, Pencil, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   encodeStoryAppearance,
@@ -38,8 +38,11 @@ export function StoryStudio({ profile }: { profile: Profile }) {
   const [caption, setCaption] = useState("");
   const [capPos, setCapPos] = useState({ x: 50, y: 80 }); // نسبة مئوية
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textInputRef = useRef<HTMLTextAreaElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const dragStart = useRef<{ pointerId: number; x: number; y: number; pos: { x: number; y: number } } | null>(null);
+  const pinchStart = useRef<{ distance: number; size: number } | null>(null);
 
   const merchant: StoryMerchant = {
     id: profile.id,
@@ -89,18 +92,45 @@ export function StoryStudio({ profile }: { profile: Profile }) {
     setMode("text");
   }
 
-  // سحب موضع النص فوق الصورة
-  function onPointerDown() {
-    dragging.current = true;
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 1) {
+      dragStart.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, pos: capPos };
+      return;
+    }
+    if (pointers.current.size >= 2) {
+      const [first, second] = Array.from(pointers.current.values());
+      pinchStart.current = { distance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y)), size: textSize };
+      dragStart.current = null;
+    }
   }
-  function onPointerUp() {
-    dragging.current = false;
+
+  function onPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size === 0) {
+      dragStart.current = null;
+      pinchStart.current = null;
+    } else if (pointers.current.size === 1) {
+      const [pointerId, point] = Array.from(pointers.current.entries())[0];
+      dragStart.current = { pointerId, x: point.x, y: point.y, pos: capPos };
+      pinchStart.current = null;
+    }
   }
-  function onPointerMove(e: React.PointerEvent) {
-    if (!dragging.current || !canvasRef.current) return;
+
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size >= 2 && pinchStart.current) {
+      const [first, second] = Array.from(pointers.current.values());
+      const distance = Math.hypot(second.x - first.x, second.y - first.y);
+      setTextSize(Math.min(42, Math.max(18, pinchStart.current.size * distance / pinchStart.current.distance)));
+      return;
+    }
+    if (!canvasRef.current || dragStart.current?.pointerId !== e.pointerId) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const x = dragStart.current.pos.x + ((e.clientX - dragStart.current.x) / rect.width) * 100;
+    const y = dragStart.current.pos.y + ((e.clientY - dragStart.current.y) / rect.height) * 100;
     setCapPos({
       x: Math.min(95, Math.max(5, x)),
       y: Math.min(95, Math.max(5, y)),
@@ -146,8 +176,8 @@ export function StoryStudio({ profile }: { profile: Profile }) {
         textColor,
         textStyle,
         textSize,
-        x: mode === "image" ? capPos.x : 50,
-        y: mode === "image" ? capPos.y : 50,
+        x: capPos.x,
+        y: capPos.y,
       }),
       image_url: imageUrl,
       product_id: productId || null,
@@ -247,10 +277,27 @@ export function StoryStudio({ profile }: { profile: Profile }) {
           </div>
         ) : (
           <div
-            className={`mx-auto w-[150px] aspect-[9/16] rounded-card flex items-center justify-center p-4 text-center font-display leading-snug break-words ${textStyle === "strong" ? "font-black" : "font-semibold"} ${textStyle === "label" ? "rounded-xl" : ""}`}
-            style={{ background: color, color: textColor, fontSize: textSize, boxShadow: textStyle === "label" ? "inset 0 0 0 999px rgba(0,0,0,0.38)" : undefined }}
+            ref={canvasRef}
+            onPointerDown={onPointerDown}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            onPointerMove={onPointerMove}
+            className="relative mx-auto w-[150px] aspect-[9/16] touch-none select-none overflow-hidden rounded-card bg-chip"
+            style={{ background: color }}
           >
-            {text || "نص قصتك"}
+            <p
+              className={`absolute max-w-[88%] -translate-x-1/2 -translate-y-1/2 break-words px-2 text-center font-display leading-snug ${textStyle === "strong" ? "font-black" : "font-semibold"} ${textStyle === "label" ? "rounded-xl py-1" : ""}`}
+              style={{
+                left: `${capPos.x}%`,
+                top: `${capPos.y}%`,
+                color: textColor,
+                fontSize: textSize,
+                background: textStyle === "label" ? "rgba(0,0,0,0.48)" : undefined,
+                textShadow: textStyle === "label" ? undefined : textColor === "#111111" ? "0 1px 8px rgba(255,255,255,0.8)" : "0 2px 10px rgba(0,0,0,0.9)",
+              }}
+            >
+              {text || "نص قصتك"}
+            </p>
           </div>
         )}
 
@@ -261,6 +308,7 @@ export function StoryStudio({ profile }: { profile: Profile }) {
             rows={2}
             maxLength={40}
             value={mode === "image" ? caption : text}
+            ref={textInputRef}
             onChange={(e) => (mode === "image" ? setCaption(e.target.value) : setText(e.target.value))}
             placeholder={mode === "image" ? "أضف تعليقاً فوق الصورة (اختياري، اسحبه لتحريكه)" : "اكتب قصتك (حتى 40 حرفاً)"}
           />
@@ -271,16 +319,32 @@ export function StoryStudio({ profile }: { profile: Profile }) {
 
         {/* ألوان الخلفية - فقط لوضع النص */}
         {mode === "text" && (
-          <div className="flex gap-3 justify-center">
-            {STORY_COLORS.map((c) => (
-              <button
-                key={c}
-                onClick={() => setColor(c)}
-                aria-label={c}
-                className={`w-8 h-8 rounded-full ${color === c ? "ring-2 ring-ink ring-offset-2 ring-offset-card" : ""}`}
-                style={{ background: c }}
-              />
-            ))}
+          <div className="flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                const current = STORY_COLORS.indexOf(color);
+                setColor(STORY_COLORS[(current + 1) % STORY_COLORS.length]);
+              }}
+              aria-label="تغيير لون الخلفية"
+              title="تغيير لون الخلفية"
+              className="relative size-9 overflow-hidden rounded-full border-2 border-white shadow-md transition-transform active:scale-90"
+              style={{ background: color }}
+            >
+              <RefreshCw size={13} className="absolute bottom-0 right-0 rounded-full bg-black/60 p-0.5 text-white" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTextStyle("classic");
+                textInputRef.current?.focus();
+              }}
+              aria-label="كتابة النص بالخط العادي"
+              className="flex size-9 items-center justify-center rounded-full bg-chip text-ink"
+            >
+              <Pencil size={16} />
+            </button>
+            <span className="text-xs text-muted">حرّك النص أو كبّره بإصبعين</span>
           </div>
         )}
 
@@ -295,30 +359,7 @@ export function StoryStudio({ profile }: { profile: Profile }) {
               style={{ background: c, boxShadow: textColor === c ? "0 0 0 2px #faf8f5, 0 0 0 4px #111" : "none" }}
             />
           ))}
-          {([
-            ["classic", "عادي"],
-            ["strong", "عريض"],
-            ["label", "خلفية"],
-          ] as [StoryTextStyle, string][]).map(([style, label]) => (
-            <button
-              key={style}
-              type="button"
-              onClick={() => setTextStyle(style)}
-              aria-pressed={textStyle === style}
-              className={`rounded-pill px-3 py-1.5 text-xs ${textStyle === style ? "bg-ink text-white" : "bg-chip text-ink/70"}`}
-            >
-              {label}
-            </button>
-          ))}
-          <input
-            type="range"
-            min={18}
-            max={36}
-            value={textSize}
-            aria-label="حجم النص"
-            onChange={(e) => setTextSize(Number(e.target.value))}
-            className="w-20 accent-ink"
-          />
+          <span className="text-xs text-muted">اسحب النص، وقرّبه أو باعد إصبعيك لتغيير حجمه</span>
         </div>
 
         <Dropdown direction="up" options={[{ value: "", label: "بدون رابط منتج" }, ...products.map((p) => ({ value: p.id, label: p.title }))]} value={productId} onChange={setProductId} className="bg-chip rounded-2xl px-4 py-3 text-sm outline-none" />

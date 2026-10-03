@@ -18,7 +18,6 @@ type NotificationRow = {
   title: string;
   body: string;
   type: string;
-  link: string | null;
   read_at: string | null;
   created_at: string;
 };
@@ -28,19 +27,16 @@ function getKind(type: string): AppNotification["kind"] {
   if (type.includes("like")) return "like";
   if (type.includes("comment")) return "comment";
   if (type.includes("follow")) return "follow";
+  if (type.includes("reply")) return "message";
+  if (type.includes("share")) return "general";
   if (type.includes("call")) return "call";
   if (type.includes("message")) return "message";
   if (type.includes("order")) return "order";
   return "general";
 }
 
-// رابط داخلي فقط، حتى لا يوجّه إشعار المستخدم لموقع خارجي
-function safeLink(link: string | null): string | null {
-  if (!link) return null;
-  return link.startsWith("/") && !link.startsWith("//") ? link : null;
-}
-
 function getHref(type: string): string {
+  if (type.startsWith("story_")) return "/profile/stories";
   if (type === "admin_verification") return "/admin/verifications";
   if (type === "admin_campaign") return "/admin/campaigns";
   if (type === "admin_report") return "/admin/reports";
@@ -64,7 +60,7 @@ export function useNotifications(userId: string | null) {
     }
     const { data, error } = await supabase
       .from("notifications")
-      .select("id, title, body, type, link, read_at, created_at")
+      .select("id, title, body, type, read_at, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(100);
@@ -74,7 +70,7 @@ export function useNotifications(userId: string | null) {
         kind: getKind(row.type),
         title: row.title,
         message: row.body,
-        href: safeLink(row.link) ?? getHref(row.type),
+        href: getHref(row.type),
         createdAt: row.created_at,
         readAt: row.read_at,
       })));

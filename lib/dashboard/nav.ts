@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BadgeCheck,
   BookOpen,
   ClipboardList,
   HelpCircle,
@@ -16,6 +17,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'لوحة التحكم', href: '/dashboard', icon: LayoutDashboard },
   { label: 'دفتر الديون', href: '/dashboard/debts', icon: BookOpen },
   { label: 'الطلبات', href: '/dashboard/orders', icon: ClipboardList },
+  { label: 'توثيق المتجر', href: '/dashboard/verification', icon: BadgeCheck },
   { label: 'المخازن', href: '/dashboard/inventory', icon: Warehouse },
   { label: 'تحليل المنتجات', href: '/dashboard/analytics', icon: BarChart3 },
   { label: 'الإعلانات', href: '/dashboard/ads', icon: Megaphone },
