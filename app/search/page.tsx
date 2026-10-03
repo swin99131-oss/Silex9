@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Search as SearchIcon, X } from "lucide-react";
 import {
   getSuggestions,
   norm,
   searchProducts,
+  searchPeople,
+  type PersonResult,
   type Product,
   type Suggestions,
 } from "@/lib/catalog";
@@ -34,6 +37,7 @@ function saveRecent(list: string[]) {
 export default function SearchPage() {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Product[]>([]);
+  const [people, setPeople] = useState<PersonResult[]>([]);
   const [done, setDone] = useState(false);
   const [sugg, setSugg] = useState<Suggestions>({ categories: [], terms: [] });
   const [recent, setRecent] = useState<string[]>([]);
@@ -48,13 +52,15 @@ export default function SearchPage() {
     const term = q.trim();
     if (!term) {
       setResults([]);
+      setPeople([]);
       return;
     }
     let alive = true;
     const t = setTimeout(() => {
-      searchProducts(term).then((r) => {
+      Promise.all([searchProducts(term), searchPeople(term)]).then(([r, ppl]) => {
         if (!alive) return;
         setResults(r);
+        setPeople(ppl);
         setDone(true);
       });
     }, 250);
@@ -184,6 +190,32 @@ export default function SearchPage() {
             </div>
           )}
 
+          {people.length > 0 && (
+            <div className="mb-6">
+              <p className="mb-3 text-xs text-muted">حسابات</p>
+              <div className="flex gap-4 overflow-x-auto pb-1">
+                {people.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/u/${p.id}`}
+                    onClick={() => commit(q.trim())}
+                    className="flex w-16 shrink-0 flex-col items-center gap-1.5 text-center"
+                  >
+                    <span className="flex size-14 items-center justify-center overflow-hidden rounded-full bg-chip font-display text-lg">
+                      {p.avatar ? <img src={p.avatar} alt="" className="h-full w-full object-cover" /> : p.name.charAt(0)}
+                    </span>
+                    <span className="w-full truncate text-[11px]">{p.name}</span>
+                    {p.username && (
+                      <span dir="ltr" className="w-full truncate text-[10px] text-muted">
+                        @{p.username}
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {done && results.length > 0 && (
             <p className="text-xs text-muted mb-3">
               {results.length} نتيجة لـ «{q}»
@@ -199,7 +231,7 @@ export default function SearchPage() {
             ))}
           </div>
 
-          {done && results.length === 0 && (
+          {done && results.length === 0 && people.length === 0 && (
             <div className="text-center mt-10">
               <p className="text-sm text-muted">لا توجد نتائج لـ «{q}»</p>
               {sugg.categories.length > 0 && (

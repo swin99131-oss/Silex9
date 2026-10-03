@@ -184,3 +184,33 @@ export async function getSuggestions(): Promise<Suggestions> {
 
   return { categories, terms };
 }
+
+
+export type PersonResult = { id: string; name: string; username: string | null; avatar: string | null };
+
+export async function searchPeople(q: string): Promise<PersonResult[]> {
+  const s = q.trim().replace(/[%,()*]/g, " ").trim().replace(/^@/, "");
+  if (s.length < 2) return [];
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, full_name, username, store_name, avatar_url, role")
+    .or(`username.ilike.%${s}%,full_name.ilike.%${s}%,store_name.ilike.%${s}%`)
+    .limit(12);
+  type Row = {
+    id: string;
+    full_name: string | null;
+    username: string | null;
+    store_name: string | null;
+    avatar_url: string | null;
+    role: string | null;
+  };
+  return ((data ?? []) as Row[])
+    .filter((p) => p.role !== "admin")
+    .slice(0, 8)
+    .map((p) => ({
+      id: p.id,
+      name: p.store_name || p.full_name || p.username || "مستخدم",
+      username: p.username,
+      avatar: p.avatar_url,
+    }));
+}

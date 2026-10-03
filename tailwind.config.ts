@@ -31,8 +31,8 @@ const config: Config = {
         "sidebar-ring": "#111111",
       },
       fontFamily: {
-        display: ["var(--font-arabic)", "system-ui", "sans-serif"],
-        sans: ["var(--font-arabic)", "system-ui", "sans-serif"],
+        display: ["var(--font-fraunces)", "serif"],
+        sans: ["var(--font-inter)", "sans-serif"],
       },
       borderRadius: {
         card: "28px",

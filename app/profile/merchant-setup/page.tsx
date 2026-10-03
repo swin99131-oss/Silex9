@@ -1,5 +1,6 @@
 "use client";
 
+import { WhatsappInput, isValidWhatsapp } from "@/components/ui/WhatsappInput";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Notice } from "@/components/ui/Notice";
 import { PageLoading } from "@/components/ui/Skeleton";
@@ -73,7 +74,7 @@ export default function MerchantSetupPage() {
     if (!category) return setErr("اختر نوع منتجاتك");
     if (!country) return setErr("اختر دولتك");
     if (!city.trim()) return setErr("اكتب مدينتك");
-    if (!whatsapp.trim()) return setErr("رقم الواتساب مطلوب ليتواصل الزبائن معك");
+    if (!isValidWhatsapp(whatsapp)) return setErr("رقم الواتساب مطلوب ليتواصل الزبائن معك");
     setBusy(true);
     setErr("");
     const patch = {
@@ -142,13 +143,7 @@ export default function MerchantSetupPage() {
 
         <div>
           <label className="block text-xs font-medium mb-1">رقم الواتساب للحجز</label>
-          <input
-            value={whatsapp}
-            onChange={(e) => setWhatsapp(e.target.value)}
-            placeholder="9647XXXXXXXX"
-            dir="ltr"
-            className={field}
-          />
+          <WhatsappInput value={whatsapp} onChange={setWhatsapp} />
         </div>
 
         <div>

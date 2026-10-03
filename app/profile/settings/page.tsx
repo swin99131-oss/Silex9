@@ -1,5 +1,6 @@
 "use client";
 
+import { WhatsappInput } from "@/components/ui/WhatsappInput";
 import { Notice } from "@/components/ui/Notice";
 import { PageLoading } from "@/components/ui/Skeleton";
 import { useEffect, useState } from "react";
@@ -251,16 +252,7 @@ export default function SettingsPage() {
 
         <div>
           <label className="block text-xs font-medium text-ink mb-1">رقم الواتساب</label>
-          <div className="relative">
-            <input
-              type="text"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              placeholder="9647XXXXXXXX"
-              className="w-full pl-4 pr-10 py-2.5 rounded-xl bg-chip border border-line/40 text-ink text-xs focus:outline-none focus:border-ink"
-            />
-            <Phone size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted" />
-          </div>
+          <WhatsappInput value={whatsapp} onChange={setWhatsapp} />
         </div>
       </div>
 
