@@ -20,10 +20,15 @@ export async function POST(request: Request) {
   const webhookSecret = process.env.ONESIGNAL_WEBHOOK_SECRET;
   const appId = process.env.ONESIGNAL_APP_ID ?? process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
   const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
-  if (!webhookSecret || !appId || !restApiKey) {
+  if (!appId || !restApiKey) {
     return NextResponse.json({ error: "OneSignal is not configured" }, { status: 503 });
   }
-  if (!secretMatches(request.headers.get("x-onesignal-webhook-secret"), webhookSecret)) {
+  const authorization = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? null;
+  const receivedSecret = webhookSecret
+    ? request.headers.get("x-onesignal-webhook-secret")
+    : authorization;
+  const expectedSecret = webhookSecret ?? restApiKey;
+  if (!secretMatches(receivedSecret, expectedSecret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

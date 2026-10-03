@@ -29,6 +29,6 @@ ONESIGNAL_WEBHOOK_SECRET=
 
 `NEXT_PUBLIC_ONESIGNAL_APP_ID` هو معرّف تطبيق الويب في OneSignal. يمكن ضبط `ONESIGNAL_APP_ID` كنسخة خادمية من المعرّف، وإلا يستخدم المسار القيمة العامة. `ONESIGNAL_REST_API_KEY` و`ONESIGNAL_WEBHOOK_SECRET` أسرار خادمية، ولا تضع بادئة `NEXT_PUBLIC_` عليهما.
 
-من Supabase أنشئ Database Webhook على `public.notifications` لحدث `INSERT`، بعنوان `https://<نطاق-التطبيق>/api/onesignal/notifications`، وأضف ترويسة `x-onesignal-webhook-secret` بالقيمة نفسها الموجودة في `ONESIGNAL_WEBHOOK_SECRET`. يرسل المسار إشعار OneSignal إلى External ID المطابق لـ `user_id`. يستخدم المتصفح زر «تفعيل إشعارات الجهاز» لطلب إذن Push من المستخدم، وملف `public/OneSignalSDKWorker.js` لخدمة الويب.
+من Supabase أنشئ Database Webhook على `public.notifications` لحدث `INSERT`، بعنوان `https://<نطاق-التطبيق>/api/onesignal/notifications`. إذا ضبطت `ONESIGNAL_WEBHOOK_SECRET` فأرسلها في ترويسة `x-onesignal-webhook-secret`. إن لم تضبطها، استخدم ترويسة `Authorization: Bearer <ONESIGNAL_REST_API_KEY>`؛ لا تضع المفتاح داخل عنوان URL. يرسل المسار إشعار OneSignal إلى External ID المطابق لـ `user_id`. يستخدم المتصفح زر «تفعيل إشعارات الجهاز» لطلب إذن Push من المستخدم، وملف `public/OneSignalSDKWorker.js` لخدمة الويب.
 
 يرسل الـWebhook أي صف جديد يُضاف إلى جدول الإشعارات. الدالة الحالية `admin_review_campaign` تنشئ إشعارات قرارات الحملات؛ أما الإعجابات والمتابعات والرسائل وغيرها فتحتاج مساراتها أو تريغرات قاعدة البيانات إلى إدخال صفوف في الجدول حتى تصل كإشعارات Push.
