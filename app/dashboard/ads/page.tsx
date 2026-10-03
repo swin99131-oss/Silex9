@@ -6,7 +6,6 @@ import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
 import { useProfile } from "@/lib/useProfile"
 import { formatIQD } from "@/components/store/store-context"
-import { Sidebar } from "@/components/dashboard/sidebar"
 import { Header } from "@/components/dashboard/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -277,11 +276,7 @@ export default function AdsPage() {
 
   return (
     <div className="flex min-h-screen bg-background" dir="rtl">
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
-
-      <main className="flex-1 p-3 pb-28 md:p-4 lg:p-5 lg:me-64">
+      <main className="flex-1 p-3 pb-28 md:p-4 lg:p-5">
         <Header
           title="الإعلانات"
           description="روّج لمنتجاتك ومتجرك للوصول لزبائن أكثر"

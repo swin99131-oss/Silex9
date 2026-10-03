@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
@@ -28,6 +29,19 @@ export default function PasswordPage() {
     });
   }, []);
 
+  // إصلاح تجميد الخانة عند الرجوع عبر ذاكرة المتصفح (bfcache)
+  useEffect(() => {
+    function reset(event: PageTransitionEvent) {
+      if (event.persisted) {
+        setPw("");
+        setPw2("");
+        setErr("");
+      }
+    }
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
+
   async function save() {
     setErr("");
     if (pw.length < 8) return setErr("كلمة المرور يجب ألا تقل عن 8 أحرف");
@@ -44,6 +58,8 @@ export default function PasswordPage() {
       return;
     }
     toast.success("تم تغيير كلمة المرور");
+    setPw("");
+    setPw2("");
     router.back();
   }
 

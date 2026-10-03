@@ -6,7 +6,7 @@ import { PageLoading } from "@/components/ui/Skeleton";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Grid3x3, MessageCircle, User as UserIcon, ChevronRight } from "lucide-react";
+import { Grid3x3, MessageCircle, User as UserIcon, ChevronRight, MoreVertical, ShieldAlert, Flag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/lib/useProfile";
 import { FollowButton } from "@/components/FollowButton";
@@ -29,6 +29,35 @@ export default function UserProfilePage() {
   const [following, setFollowing] = useState(0);
   const [posts, setPosts] = useState<Post[]>([]);
   const [starting, setStarting] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  async function handleBlock() {
+    if (!viewer || !profile) return;
+    if (!confirm(`هل تريد حظر ${displayNameSafe(profile)}؟`)) return;
+    const { error } = await supabase.from("blocks").insert({ blocker_id: viewer.id, blocked_id: profile.id });
+    setShowMenu(false);
+    if (error) { toast.error("تعذّر الحظر، حاول مجدداً"); return; }
+    toast.success("تم حظر المستخدم");
+    router.push("/profile");
+  }
+
+  async function handleReport() {
+    if (!viewer || !profile) return;
+    const reason = prompt("ما سبب الإبلاغ؟");
+    setShowMenu(false);
+    if (!reason) return;
+    const { error } = await supabase.from("reports").insert({
+      reporter_id: viewer.id,
+      reported_id: profile.id,
+      reason,
+    });
+    if (error) { toast.error("تعذّر إرسال البلاغ"); return; }
+    toast.success("تم إرسال البلاغ، شكراً لك");
+  }
+
+  function displayNameSafe(p: Profile) {
+    return p.full_name || p.username || "مستخدم";
+  }
 
   useEffect(() => {
     let alive = true;
@@ -117,7 +146,7 @@ export default function UserProfilePage() {
 
   return (
     <div className="pb-10">
-      <div className="flex items-center px-6 pt-2 md:px-10">
+      <div className="flex items-center justify-between px-6 pt-2 md:px-10">
         <button
           onClick={() => router.back()}
           className="w-9 h-9 rounded-full bg-chip flex items-center justify-center"
@@ -125,6 +154,35 @@ export default function UserProfilePage() {
         >
           <ChevronRight size={18} />
         </button>
+        {!isOwnProfile && viewer && (
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu((v) => !v)}
+              className="w-9 h-9 rounded-full bg-chip flex items-center justify-center"
+              aria-label="خيارات"
+            >
+              <MoreVertical size={18} />
+            </button>
+            {showMenu && (
+              <div className="absolute left-0 top-11 bg-card shadow-float rounded-2xl overflow-hidden z-[70] w-44 border border-line/30">
+                <button
+                  onClick={handleReport}
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm hover:bg-chip"
+                >
+                  <Flag size={18} />
+                  إبلاغ
+                </button>
+                <button
+                  onClick={handleBlock}
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-red-600 hover:bg-red-500/5"
+                >
+                  <ShieldAlert size={18} />
+                  حظر المستخدم
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col items-center text-center px-6 mt-2">

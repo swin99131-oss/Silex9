@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
-import { Home, Compass, User, MessageCircle, PlusSquare, Search, ShoppingBag, Settings } from "lucide-react";
+import { Home, Compass, User, MessageCircle, PlusSquare, Search, ShoppingBag, Settings, ClipboardList } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useCart } from "@/lib/cart-context";
 import { PageSkeleton } from "@/components/ui/Skeleton";
@@ -138,6 +138,17 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             </span>
             السلة
           </Link>
+          {!isMerchant && (
+            <Link
+              href="/profile/orders"
+              className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-colors ${
+                isActive("/profile/orders") ? "bg-[#1e3a5f]/10 font-bold" : "text-[#1e3a5f]/70 hover:bg-[#1e3a5f]/5"
+              }`}
+            >
+              <ClipboardList size={20} />
+              طلباتي
+            </Link>
+          )}
           <NotificationBell
             userId={currentUserId}
             showLabel
@@ -180,6 +191,17 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             <ShoppingBag size={18} />
             {badge}
           </Link>
+          {!isMerchant && (
+            <Link
+              href="/profile/orders"
+              aria-label="طلباتي"
+              className={`relative w-10 h-10 rounded-full flex items-center justify-center ${
+                isActive("/profile/orders") ? "bg-[#1e3a5f]/15" : "bg-[#1e3a5f]/5"
+              }`}
+            >
+              <ClipboardList size={18} />
+            </Link>
+          )}
         </div>
       </header>
 

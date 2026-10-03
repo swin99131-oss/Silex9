@@ -149,10 +149,10 @@ export function AnalyticsContent() {
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stockByCategory} margin={{ top: 10, right: -20, left: 10, bottom: 0 }}>
+                <BarChart data={stockByCategory} margin={{ top: 10, right: 50, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ECECE8" />
                   <XAxis dataKey="category" axisLine={false} tickLine={false} tick={{ fill: "#8B8B8B", fontSize: 11 }} />
-                  <YAxis orientation="right" axisLine={false} tickLine={false} tick={{ fill: "#8B8B8B", fontSize: 11 }} />
+                  <YAxis orientation="right" width={40} tickMargin={10} axisLine={false} tickLine={false} tick={{ fill: "#8B8B8B", fontSize: 11 }} />
                   <Tooltip content={<ChartTooltip suffix="وحدة" />} cursor={{ fill: "transparent" }} />
                   <Bar dataKey="stock" radius={[6, 6, 0, 0]} maxBarSize={40}>
                     {stockByCategory.map((entry) => (

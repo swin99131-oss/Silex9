@@ -22,6 +22,7 @@ export function BookChatButton({
   message,
   productId,
   items,
+  beforeOpen,
   label = "حجز بالدردشة",
   className = "",
 }: {
@@ -29,6 +30,7 @@ export function BookChatButton({
   message?: string;
   productId?: string;
   items?: CartItemMeta[];
+  beforeOpen?: (userId: string) => Promise<void>;
   label?: string;
   className?: string;
 }) {
@@ -43,6 +45,7 @@ export function BookChatButton({
       const uid = data.session?.user.id;
       if (!uid) return router.push("/login");
       if (uid === merchantId) return;
+      await beforeOpen?.(uid);
 
       const convId = await createConversation(uid, merchantId);
 

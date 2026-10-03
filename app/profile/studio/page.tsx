@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { PageLoading } from "@/components/ui/Skeleton";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Plus, Check, Play, AlertCircle, RefreshCw, Megaphone } from "lucide-react";
+import { ChevronRight, Plus, Check, Play, AlertCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useProfile } from "@/lib/useProfile";
 import { getCategories, type Category } from "@/lib/catalog";
@@ -106,7 +106,6 @@ export default function StudioPage() {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [caption, setCaption] = useState("");
-  const [promote, setPromote] = useState(false);
 
   const [progress, setProgress] = useState(0);
   const [pickErr, setPickErr] = useState("");
@@ -229,7 +228,6 @@ export default function StudioPage() {
           price: priceNum,
           category,
           cover_url: isVideo ? thumbUrl ?? mediaData.publicUrl : mediaData.publicUrl,
-          promoted: promote,
         })
         .select("id")
         .single();
@@ -305,7 +303,7 @@ export default function StudioPage() {
         </div>
       )}
 
-      {/* المرحلة 2: تفاصيل المنتج + غلاف الفيديو + ترويج + نشر */}
+      {/* المرحلة 2: تفاصيل المنتج وغلاف الفيديو */}
       {step === "details" && (
         <div className="px-6 mt-4 max-w-sm mx-auto w-full flex flex-col gap-4 pb-8">
           <div className="relative aspect-square rounded-2xl bg-chip overflow-hidden">
@@ -403,28 +401,6 @@ export default function StudioPage() {
               className="w-full bg-chip rounded-2xl p-4 text-sm outline-none resize-none focus:ring-1 focus:ring-ink/20"
             />
           </div>
-
-          {/* ترويج */}
-          <button
-            type="button"
-            onClick={() => setPromote((v) => !v)}
-            className={`flex items-center gap-3 rounded-2xl p-4 text-right transition-colors ${
-              promote ? "bg-ink text-white" : "bg-chip text-ink"
-            }`}
-          >
-            <Megaphone size={18} className="shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold">ترويج هذا المنشور</p>
-              <p className={`text-[11px] mt-0.5 ${promote ? "text-white/70" : "text-muted"}`}>
-                يظهر بأولوية أعلى للزوار
-              </p>
-            </div>
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-              promote ? "border-white bg-white" : "border-ink/30"
-            }`}>
-              {promote && <Check size={12} className="text-ink" />}
-            </div>
-          </button>
 
           {err && <Notice type="error">{err}</Notice>}
 

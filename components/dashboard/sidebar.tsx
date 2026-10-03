@@ -5,6 +5,7 @@ import {
   BookOpen,
   Warehouse,
   BarChart3,
+  ClipboardList,
   Settings,
   HelpCircle,
   Store,
@@ -20,6 +21,7 @@ const menuItems = [
   { icon: BookOpen, label: "دفتر الديون", href: "/dashboard/debts" },
   { icon: Warehouse, label: "المخازن", href: "/dashboard/inventory" },
   { icon: BarChart3, label: "تحليل المنتجات", href: "/dashboard/analytics" },
+  { icon: ClipboardList, label: "الطلبات", href: "/dashboard/orders" },
   { icon: Megaphone, label: "الإعلانات", href: "/dashboard/ads" },
 ]
 

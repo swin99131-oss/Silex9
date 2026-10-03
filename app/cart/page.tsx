@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, X, ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
 import { useCart } from "@/lib/cart-context";
+import { supabase } from "@/lib/supabase";
+import { createCartOrder } from "@/lib/orders";
 import {
   buildOrderMessage,
   colorName,
@@ -16,8 +20,10 @@ import ScreenHeader from "@/components/ScreenHeader";
 import { BookChatButton } from "@/components/BookChatButton";
 
 export default function CartPage() {
+  const router = useRouter();
   const { lines, setQty, remove } = useCart();
   const [numbers, setNumbers] = useState<Record<string, string> | null>(null);
+  const [orderingMerchantId, setOrderingMerchantId] = useState<string | null>(null);
 
   const groups = groupByMerchant(lines);
   const merchantKey = groups
@@ -25,6 +31,32 @@ export default function CartPage() {
     .sort()
     .join(",");
   const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+  async function orderOnWhatsApp(merchantId: string, group: (typeof groups)[number], number: string) {
+    if (orderingMerchantId) return;
+    const popup = window.open("about:blank", "_blank");
+    if (!popup) {
+      toast.error("اسمح بفتح النوافذ المنبثقة لإكمال الطلب عبر واتساب");
+      return;
+    }
+    popup.opener = null;
+    setOrderingMerchantId(merchantId);
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) {
+        popup.close();
+        router.push("/login");
+        return;
+      }
+      await createCartOrder(data.user.id, group);
+      popup.location.href = waLink(number, buildOrderMessage(group.name, group.items, origin));
+    } catch (error) {
+      popup.close();
+      toast.error(error instanceof Error ? `تعذّر تسجيل الطلب: ${error.message}` : "تعذّر تسجيل الطلب");
+    } finally {
+      setOrderingMerchantId(null);
+    }
+  }
 
   useEffect(() => {
     if (!merchantKey) {
@@ -134,20 +166,23 @@ export default function CartPage() {
                       جارٍ التحضير…
                     </button>
                   ) : number ? (
-                    <a
-                      href={waLink(number, buildOrderMessage(g.name, g.items, origin))}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`${btn} bg-ink text-white`}
+                    <button
+                      type="button"
+                      onClick={() => void orderOnWhatsApp(g.merchantId, g, number)}
+                      disabled={orderingMerchantId !== null}
+                      className={`${btn} bg-ink text-white disabled:opacity-60`}
                     >
-                      تواصل مع {g.name} · ${g.total.toFixed(2)}
-                    </a>
+                      {orderingMerchantId === g.merchantId
+                        ? "جارٍ تسجيل الطلب…"
+                        : `تواصل مع ${g.name} · $${g.total.toFixed(2)}`}
+                    </button>
                   ) : (
                     <div className={`${btn} bg-chip text-ink/70`}>لا يتوفر رقم تواصل لهذا التاجر</div>
                   )}
 
                   <BookChatButton
                     merchantId={g.merchantId}
+                    beforeOpen={(customerId) => createCartOrder(customerId, g)}
                     items={g.items.map((it) => ({
                       id: it.product.id,
                       name: it.product.name,

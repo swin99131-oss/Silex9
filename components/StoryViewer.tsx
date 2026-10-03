@@ -373,6 +373,8 @@ export function StoryViewer({ merchant, stories: initialStories, viewerId, start
           </div>
         )}
 
+        <div className="flex-1" />
+
         <div className="relative z-20 px-4 pb-6 flex flex-col gap-3">
           {note && <p className="text-center text-xs">{note}</p>}
           {story.product_id && (

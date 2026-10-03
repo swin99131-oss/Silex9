@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [err, setErr] = useState("");
 
   // استرجاع البريد المحفوظ عند تحميل الصفحة
@@ -23,6 +24,9 @@ export default function LoginPage() {
       setEmail(saved);
       setRememberMe(true);
     }
+    const oauthError = new URLSearchParams(window.location.search).get("error");
+    if (oauthError === "google_oauth") setErr("تعذّر تسجيل الدخول باستخدام Google. تحقق من إعدادات مزود Google وحاول مجدداً.");
+    if (oauthError === "auth_config") setErr("إعدادات تسجيل الدخول غير مكتملة. تواصل مع الدعم.");
   }, []);
 
   // تحديث البريد الإلكتروني كما يكتبه المستخدم تماماً دون تعديل أو بتر لحمايته من أخطاء التوافق
@@ -77,12 +81,24 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/home`,
-      },
-    });
+    if (googleBusy) return;
+    setGoogleBusy(true);
+    setErr("");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=%2Fhome`,
+        },
+      });
+      if (error) {
+        setErr(`تعذّر بدء تسجيل الدخول عبر Google: ${error.message}`);
+        setGoogleBusy(false);
+      }
+    } catch {
+      setErr("تعذّر الاتصال بخدمة تسجيل الدخول عبر Google. حاول مجدداً.");
+      setGoogleBusy(false);
+    }
   };
 
   return (
@@ -173,7 +189,8 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="w-full py-3 px-4 rounded-2xl border border-[#111111]/15 bg-[#faf8f5] hover:bg-[#111111]/5 text-[#111111] text-sm font-medium flex items-center justify-center gap-2 transition"
+          disabled={googleBusy}
+          className="w-full py-3 px-4 rounded-2xl border border-[#111111]/15 bg-[#faf8f5] hover:bg-[#111111]/5 text-[#111111] text-sm font-medium flex items-center justify-center gap-2 transition disabled:opacity-60"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -181,7 +198,7 @@ export default function LoginPage() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
           </svg>
-          متابعة باستخدام Google
+          {googleBusy ? "جارٍ الاتصال بـGoogle..." : "متابعة باستخدام Google"}
         </button>
 
         <div className="mt-6 text-center text-xs text-[#111111]/60">

@@ -33,7 +33,6 @@ export function StoryEditor({
   const [textStyle, setTextStyle] = useState<StoryTextStyle>("classic");
   const [textSize, setTextSize] = useState(28);
   const [productId, setProductId] = useState("");
-  const [showColors, setShowColors] = useState(false);
   const [showProducts, setShowProducts] = useState(false);
   const [textPos, setTextPos] = useState({ x: 50, y: 50 });
 
@@ -164,6 +163,10 @@ export function StoryEditor({
             />
           )}
 
+          {hasMedia && (
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/50" />
+          )}
+
           <div
             onPointerDown={startDrag}
             className="absolute cursor-move select-none touch-none w-[80%] max-w-[260px] z-[1]"
@@ -196,35 +199,7 @@ export function StoryEditor({
           </button>
 
           <div className="flex items-center gap-2">
-            {!hasMedia && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowColors((v) => !v)}
-                  aria-label="لون الخلفية"
-                  className="w-9 h-9 rounded-full border-2 border-white/70"
-                  style={{ background: color }}
-                />
-                {showColors && (
-                  <div className="absolute left-0 top-11 bg-neutral-800 rounded-2xl p-2.5 flex gap-2 shadow-xl z-20">
-                    {STORY_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => {
-                          setColor(c);
-                          setShowColors(false);
-                        }}
-                        aria-label={c}
-                        className="w-7 h-7 rounded-full"
-                        style={{
-                          background: c,
-                          boxShadow: color === c ? "0 0 0 2px #262626, 0 0 0 4px #fff" : "none",
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {products.length > 0 && (
               <div className="relative">
@@ -279,6 +254,25 @@ export function StoryEditor({
         <div className="relative z-10 self-center -mt-1 px-3 py-1 rounded-full bg-black/35 text-white text-[10px]" dir="ltr">
           {text.length}/{MAX_CHARS}
         </div>
+
+        {!hasMedia && (
+          <div className="relative z-10 flex items-center gap-3 overflow-x-auto no-scrollbar px-4 pb-3">
+            {STORY_COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setColor(c)}
+                aria-label={c}
+                className="w-11 h-11 rounded-full shrink-0 border-2 transition-transform duration-150"
+                style={{
+                  background: c,
+                  borderColor: color === c ? "#ffffff" : "transparent",
+                  transform: color === c ? "scale(1.12)" : "scale(1)",
+                  boxShadow: color === c ? "0 2px 10px rgba(0,0,0,0.4)" : "none",
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         <div className="relative z-10 mx-auto flex items-center gap-2 rounded-full bg-black/45 px-3 py-2">
           {STORY_TEXT_COLORS.map((c) => (

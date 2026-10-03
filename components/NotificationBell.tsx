@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
 import { useNotifications } from "@/lib/useNotificationRecords";
 
@@ -9,7 +10,28 @@ export function NotificationBell({ userId, className, showLabel = false }: {
   className: string;
   showLabel?: boolean;
 }) {
-  const { unreadCount } = useNotifications(userId);
+  const { items, loading, unreadCount } = useNotifications(userId);
+  const previousIds = useRef<Set<string> | null>(null);
+  const previousUserId = useRef<string | null>(null);
+  const audio = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+    const currentIds = new Set(items.map((item) => item.id));
+    if (previousUserId.current !== userId || previousIds.current === null) {
+      previousUserId.current = userId;
+      previousIds.current = currentIds;
+      return;
+    }
+
+    const hasNewUnread = items.some((item) => !item.readAt && !previousIds.current?.has(item.id));
+    previousIds.current = currentIds;
+    if (!hasNewUnread) return;
+
+    audio.current ??= new Audio("/sounds/notification.wav");
+    audio.current.currentTime = 0;
+    void audio.current.play().catch(() => undefined);
+  }, [items, loading, userId]);
 
   return (
     <Link href="/notifications" aria-label="الإشعارات" className={`relative ${className}`}>

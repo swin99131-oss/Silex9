@@ -31,13 +31,15 @@ export interface Profile {
 
 
 export const STORY_COLORS = [
-		"#111111",
-		"#0F766E",
-		"#B45309",
-		"#9D174D",
-		"#1D4ED8",
-		"#6D28D9",
-	];
+  "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
+  "linear-gradient(135deg, #134e5e, #71b280)",
+  "linear-gradient(135deg, #16222a, #3a6073)",
+  "linear-gradient(135deg, #654ea3, #eaafc8)",
+  "linear-gradient(135deg, #1e3c72, #2a5298)",
+  "linear-gradient(135deg, #f7971e, #ffd200)",
+  "linear-gradient(135deg, #c31432, #240b36)",
+  "linear-gradient(135deg, #283048, #859398)",
+];
 
 export const STORY_TEXT_COLORS = ["#FFFFFF", "#111111", "#FDE047", "#FB7185", "#67E8F9"];
 
@@ -73,8 +75,10 @@ export function parseStoryAppearance(value: string | null | undefined): StoryApp
 		const saved = JSON.parse(value.slice(STORY_APPEARANCE_PREFIX.length)) as Partial<StoryAppearance>;
 		const validColor = (color: unknown): color is string =>
 			typeof color === "string" && /^#[\da-f]{6}$/i.test(color);
+		const validBackground = (value: unknown): value is string =>
+			validColor(value) || (typeof value === "string" && /^(linear|radial)-gradient\(.+\)$/i.test(value) && value.length < 200);
 		return {
-			background: validColor(saved.background) ? saved.background : fallback.background,
+			background: validBackground(saved.background) ? saved.background : fallback.background,
 			textColor: validColor(saved.textColor) ? saved.textColor : fallback.textColor,
 			textStyle: saved.textStyle === "strong" || saved.textStyle === "label" ? saved.textStyle : "classic",
 			textSize: typeof saved.textSize === "number" ? Math.min(42, Math.max(18, saved.textSize)) : fallback.textSize,

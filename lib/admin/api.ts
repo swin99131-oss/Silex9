@@ -88,7 +88,10 @@ export const listReports = (o: ListOpts = {}) =>
 export const listConversations = (o: ListOpts = {}) =>
   listWithCity<Conversation>('conversations', 'customer_id', o)
 export const listNotifications = (o: ListOpts = {}) =>
-  listWithCity<Notification>('notifications', 'user_id', o)
+  listWithCity<Notification>('notifications', 'user_id', o, (q) => {
+    const s = o.search ? clean(o.search) : ''
+    return s ? q.or(`title.ilike.%${s}%,body.ilike.%${s}%,type.ilike.%${s}%`) : q
+  })
 export const listCampaigns = (o: ListOpts = {}) =>
   listWithCity<Campaign>('campaigns', 'merchant_id', o)
 export const listAuditLogs = (o: ListOpts = {}) => list<AuditLog>('audit_logs', o)

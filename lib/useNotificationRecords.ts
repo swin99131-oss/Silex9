@@ -77,8 +77,11 @@ export function useNotifications(userId: string | null) {
     void load();
     if (!userId) return;
     const timer = window.setInterval(() => void load(), 60000);
+    const channelId = typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const channel = supabase
-      .channel(`notifications-${userId}`)
+      .channel(`notifications-${userId}-${channelId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
